@@ -1,0 +1,1 @@
+{"version":3,"file":"rol.js","sourceRoot":"","sources":["../../models/rol.ts"],"names":[],"mappings":";;AAAA,uCAAyC;AAEzC,MAAM,UAAU,GAAG,IAAI,iBAAM,CAAC;IAC1B,GAAG,EAAE;QACD,IAAI,EAAE,MAAM;QACZ,IAAI,EAAE,CAAC,WAAW,EAAE,YAAY,CAAC;KACpC;CACJ,CAAC,CAAC;AAEH,kBAAe,IAAA,gBAAK,EAAC,MAAM,EAAE,UAAU,CAAC,CAAC"}
