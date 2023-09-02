@@ -5,7 +5,7 @@ const capitalizar = (sentencia: string): string => {
             palabra[0].toUpperCase() + palabra.slice(1).toLowerCase()).join(' ');
 };
 
-const esFechaValida = (birthday: any) => {
+const esFechaValida = (birthday: any): boolean => {
     if(Number.isNaN(Number(birthday))) {
         return false;
     }

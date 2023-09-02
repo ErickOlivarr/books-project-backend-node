@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.renovarToken = exports.iniciarSesion = void 0;
-const usuario_1 = __importDefault(require("../models/usuario"));
+const models_1 = require("../models");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const generar_jwt_1 = __importDefault(require("../helpers/generar-jwt"));
+const helpers_1 = require("../helpers");
 const iniciarSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
-    const usuario = yield usuario_1.default.findOne({ email }); //Asi como se comentó aqui se puede hacer proyecciones, tal como lo vimos en el curso de mongdb
+    const usuario = yield models_1.Usuario.findOne({ email }); //Asi como se comentó aqui se puede hacer proyecciones, tal como lo vimos en el curso de mongdb
     const { id, password: passResult, nombre, apellido, rol } = usuario;
     const passwordCoincide = bcryptjs_1.default.compareSync(password, passResult);
     if (!passwordCoincide) {
@@ -27,7 +27,7 @@ const iniciarSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             error: 'Email o contraseña incorrecta'
         });
     }
-    const token = yield (0, generar_jwt_1.default)(id, nombre, apellido, rol);
+    const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol);
     res.json({
         ok: true,
         data: usuario,
@@ -37,7 +37,7 @@ const iniciarSesion = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.iniciarSesion = iniciarSesion;
 const renovarToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { payload: { id, nombre, apellido, rol } } = req;
-    const token = yield (0, generar_jwt_1.default)(id, nombre, apellido, rol);
+    const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol);
     res.json({
         ok: true,
         token

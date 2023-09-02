@@ -21,7 +21,8 @@ const validarJWT = async (req: Request, res: Response, next: NextFunction) => {
     } catch(err) {
         return res.status(401).json({ //si el token fue manipulado o si expiró (en el archivo generar-jwt.ts le dimos 1 hora para estar activo el jwt generado)
             ok: false,
-            error: 'Token no valido'
+            error: 'Token no valido',
+            cierre: true
         });
     }
 

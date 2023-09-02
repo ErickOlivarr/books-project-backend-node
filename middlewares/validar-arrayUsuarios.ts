@@ -1,5 +1,5 @@
 import { Types, ObjectId } from 'mongoose';
-import Autor from '../models/autor';
+import { Autor } from '../models';
 import { NextFunction, Request, Response } from 'express';
 import { tokenUsuario } from '../interfaces/usuario';
 const objectId = Types.ObjectId;

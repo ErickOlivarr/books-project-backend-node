@@ -8,14 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const usuario_1 = __importDefault(require("../models/usuario"));
+const models_1 = require("../models");
 const esRol = (...rol) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-        const { rol: rolUsuario } = yield usuario_1.default.findById(req.payload.id);
+        const { rol: rolUsuario } = yield models_1.Usuario.findById(req.payload.id);
         if (!rol.some((rolElement) => rolUsuario.includes(rolElement))) {
             return res.status(403).json({
                 ok: false,

@@ -25,8 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const moment_1 = __importDefault(require("moment"));
-const autor_1 = __importDefault(require("./autor"));
-const libro_1 = __importDefault(require("./libro"));
+const _1 = require("./");
 const mongoose_2 = require("mongoose");
 const objectId = mongoose_2.Types.ObjectId;
 const UsuarioSchema = new mongoose_1.Schema({
@@ -68,6 +67,10 @@ const UsuarioSchema = new mongoose_1.Schema({
             type: Number,
             default: 0
         },
+    },
+    img: {
+        type: String,
+        default: null
     }
 });
 //la siguiente funcion fue un ejemplo de una forma de hacer validaciones en un campo que se vio arriba
@@ -126,10 +129,10 @@ UsuarioSchema.pre('updateOne', function (next) {
         //Algo a tener en cuenta es que el this dentro de las funciones aqui puestas en el modelo va a cambiar segun el tipo de funcion, por ejemplo en la funcion de abajo del toJSON se puede usar el this.toObject(), y tambien en la funcion pre de mas arriba con el 'validate', pero en las funciones pre diferentes como con el 'aggregate' o 'find' o 'updateOne' como aqui no se puede usar el this.toObject, y tambien en la funcion pre con el 'validate' sí se puede acceder directamente a los atributos del modelo como el nombre, apellido, etc del usuario, pero en las funciones pre con el 'find', 'updateOne', etc no se puede acceder asi de esa manera poniendo this.nombre por ejemplo, sino que se acceden asi como se ve en la siguiente linea de this.getQuery()['_id'] o this.getQuery()['nombre'] por ejemplo, y tambien el this.pipeline() visto en el pre con el 'aggregate' de arriba no se puede usar en el pre con el 'find', 'updateOne', etc, ya que lo del pipeline solo es cosa del aggregate como se ve en el archivo usuarios.ts de la carpeta controllers, y tambien con el aggregate no se puede usar el populate, por eso con el pre con el 'aggregate' no se puede usar el this.populate(), pero sí se puede usar para el pre con el 'find' o 'updateOne' como aqui, asi que los metodos que se pueden usar con el pre por ejemplo depende del metodo que le pongamos ya sea si es 'aggregate' o 'updateOne' como aqui, etc
         const id = this.getQuery()['_id'];
         yield Promise.all([
-            autor_1.default.deleteMany({
+            _1.Autor.deleteMany({
                 usuario: new objectId(id)
             }),
-            libro_1.default.deleteMany({
+            _1.Libro.deleteMany({
                 usuario: new objectId(id)
             })
         ]);
@@ -137,7 +140,7 @@ UsuarioSchema.pre('updateOne', function (next) {
     });
 });
 UsuarioSchema.method('toJSON', function () {
-    const _a = this.toObject(), { __v, _id, password, estado, detalle, detalle: { peso }, detalle: { fechaNacimiento } } = _a, objeto = __rest(_a, ["__v", "_id", "password", "estado", "detalle", "detalle", "detalle"]);
+    const _a = this.toObject(), { __v, _id, password, estado, img, detalle, detalle: { peso }, detalle: { fechaNacimiento } } = _a, objeto = __rest(_a, ["__v", "_id", "password", "estado", "img", "detalle", "detalle", "detalle"]);
     objeto.nombre = `${objeto.nombre} ${objeto.apellido}`;
     delete objeto.apellido; //eliminamos el atributo apellido de la respuesta JSON
     // objeto.peso = detalle.peso.toString() + ' kg'; //esta linea y la siguiente serían por si queremos que el atributo peso y el atributo fechaNacimiento no estén en el objeto anidado del atributo detalle en la respuesta del JSON, sino que estén directamente en el objeto del usuario

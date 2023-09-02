@@ -23,13 +23,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.actualizarUsuarioRol = exports.borrarUsuario = exports.actualizarUsuario = exports.obtenerUsuario = exports.obtenerUsuarios = exports.crearUsuario = void 0;
-const usuario_1 = __importDefault(require("../models/usuario"));
+exports.mostrarFoto = exports.subirFoto = exports.actualizarUsuarioRol = exports.borrarUsuario = exports.actualizarUsuario = exports.obtenerUsuario = exports.obtenerUsuarios = exports.crearUsuario = void 0;
+const models_1 = require("../models");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const generar_jwt_1 = __importDefault(require("../helpers/generar-jwt"));
+const helpers_1 = require("../helpers");
 const mongoose_1 = require("mongoose");
-const funciones_1 = require("../helpers/funciones");
 const objectId = mongoose_1.Types.ObjectId;
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 // const esPesoValido = (peso: any): boolean => {
 //     if(peso) {
 //         if(Number.isNaN(Number(peso))) {
@@ -46,9 +47,9 @@ const objectId = mongoose_1.Types.ObjectId;
 //             palabra[0].toUpperCase() + palabra.slice(1).toLowerCase()).join(' ');
 // };
 const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const _a = req.body, { estado, password, rol } = _a, user = __rest(_a, ["estado", "password", "rol"]);
+    const _a = req.body, { estado, password, rol, img } = _a, user = __rest(_a, ["estado", "password", "rol", "img"]);
     try {
-        if (!(0, funciones_1.esPesoValido)(user.peso)) { //el atributo peso se validó aqui y no en los routers del usuario en el archivo usuarios.ts de la carpeta routers porque ese atributo hicimos que sea opcional ponerlo en el body, si no se pone entonces se guardará en base de datos (al crear el usuario) con el valor de 0 porque pusimos el default:0 en el atributo peso (del objeto anidado de detalle) del modelo de usuario en el archivo usuario.ts de la carpeta models, asi lo hicimos en este proyecto asi que por eso la validacion se hizo aqui 
+        if (!(0, helpers_1.esPesoValido)(user.peso)) { //el atributo peso se validó aqui y no en los routers del usuario en el archivo usuarios.ts de la carpeta routers porque ese atributo hicimos que sea opcional ponerlo en el body, si no se pone entonces se guardará en base de datos (al crear el usuario) con el valor de 0 porque pusimos el default:0 en el atributo peso (del objeto anidado de detalle) del modelo de usuario en el archivo usuario.ts de la carpeta models, asi lo hicimos en este proyecto asi que por eso la validacion se hizo aqui 
             return res.status(400).json({
                 ok: true,
                 error: 'No se proporcionó un peso valido'
@@ -56,12 +57,12 @@ const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         const salt = bcryptjs_1.default.genSaltSync(10);
         user.password = bcryptjs_1.default.hashSync(password, salt);
-        user.nombre = (0, funciones_1.capitalizar)(user.nombre);
-        user.apellido = (0, funciones_1.capitalizar)(user.apellido);
+        user.nombre = (0, helpers_1.capitalizar)(user.nombre);
+        user.apellido = (0, helpers_1.capitalizar)(user.apellido);
         user.rol = [
             'ROLE_USER'
         ];
-        const usuario = new usuario_1.default(user);
+        const usuario = new models_1.Usuario(user);
         const { id, nombre, apellido, email, password: pass, estado, rol, detalle } = yield usuario.save();
         const usuarioGuardado = {
             id,
@@ -77,8 +78,8 @@ const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         // const token = await generarJWT(usuarioGuardado as any as UsuarioObjeto); //se puso esto de as unknown as UsuarioObjeto para poder convertirlo a tipo UsuarioObjeto, ya que el usuarioGuardado es de un tipo especial del modelo de usuario porque se obtuvo del save de arriba, por lo tanto si le ponemos solamente as UsuarioObjeto (de la interfaz UsuarioObjeto del archivo usuario.ts de la carpeta interfaces) no se podrá convertir a tipo UsuarioObjeto, asi que cuando tengamos ese tipo de errores que no se puede convertir a un tipo de dato debemos ponerle primero as unknown y ya despues el as del tipo de objeto al que queramos convertir como se ve aqui. Tambien podemos ponerle as any en lugar de as unknown como al final se puso aqui
         // const token = await generarJWT({ ...usuarioGuardado } as UsuarioObjeto); //esto da error porque el usuarioGuardado tiene otros atributos ademas de los atributos del modelo de usuario pero esos atributos no se ven reflejados en el toJSON (cuando lo retornamos como JSON) porque son cosas como $where o cosas asi especiales de mongodb, pero al hacer esto sí se puede obtener esos atributos especiales y eso no coincidirá con la interfaz UsuarioObjeto del archivo usuario.ts de la carpeta interfaces, asi que cuidado con eso
         // const token = await generarJWT(usuarioGuardado); //las anteriores 2 lineas se comentaron por lo que se dijo arriba que se mandaría incluyendo los atributos puestos automaticamente por mongoose, pero aqui estamos mandando un objeto creado por nosotros que es la variable de usuarioGuardado, por eso aqui estamos mandando solo los atributos del modelo de usuario del archivo usuario.ts de la carpeta models que es lo que nos interesa
-        const token = yield (0, generar_jwt_1.default)(id, nombre, apellido, rol); //al final se puso que la funcion generarJWT del archivo generar-jwt.ts de la carpeta helpers que reciba el id, nombre y apellido en lugar de todo el objeto
-        const usuarioReturn = new usuario_1.default(usuarioGuardado);
+        const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol); //al final se puso que la funcion generarJWT del archivo generar-jwt.ts de la carpeta helpers que reciba el id, nombre y apellido en lugar de todo el objeto
+        const usuarioReturn = new models_1.Usuario(usuarioGuardado);
         return res.status(201).json({
             ok: true,
             data: usuarioReturn,
@@ -186,7 +187,7 @@ const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function
     //usuarios3.toJSON(); //asi con el metodo toJSON() o tambien con el metodo toObject() se convierte a objeto normal de javascript una instancia del modelo de Usuario pero ahora creada con el new Usuario como se ve arriba, ya que cuando lo creamos de esta manera no está el metodo lean() visto mas arriba, pero sí tenemos el toJSON() o el toObject() para eso
     //aqui abajo tenemos una consulta con el aggregate, esto del aggregate está disponible en mongoose y en mongodb, y sirve para hacer consultas de select, osea no para modificar sino solo para obtener como el find (al igual que el find retorna un array), pero a diferencia del find con el aggregate se puede hacer la consulta mas personalizada, ya que con el aggregate se puede agregar atributos al resultado aun cuando esos atributos no estén en el modelo, en este caso en el modelo de usuario del archivo usuario.ts de la carpeta models, tambien se puede cambiar la forma en como se muestra un atributo de un array, se puede hacer group by como los de mysql, se puede modificar el valor de los atributos en el resultado, se puede hacer left join o inner join como en mysql, etc, esas cosas el find no las puede hacer porque el find solo tiene la parte del filtro de los documentos y se le puede poner un segundo parametro para hacer proyecciones como se vio en el curso de mongodb, pero esas 2 cosas del filtro y las proyecciones el aggregate ya las tiene, abajo se ve esto, y ademas el aggregate tambien tiene lo demas que se dijo, asi que con el aggregate podemos hacer consultas mas personalizadas, aunque con mongoose con el aggregate no se obtiene una instancia del modelo de usuario en este caso, intenté convertirlo a instancia pero no hubo forma y abajo comenté un map del array obtenido de los usuarios convirtiendo cada objeto de ese array en new Usuario para intentar convertirlo a instancia, pero salen cosas raras asi y por eso lo dejé comentado mas abajo al terminar el siguiente aggregate, asi que mejor con el aggregate no se obtiene una instancia de ese modelo, sino solo objetos como tal de javascript como sería aplicando el metodo lean() al find como se vio arriba, por lo tanto al retornar como json un objeto o array obtenido del aggregate no se ejecutará la funcion toJSON del modelo que pusimos en el archivo usuario.ts de la carpeta models, pero en el aggregate de abajo hicimos lo mismo que hicimos en esa funcion toJSON, solo que ahi pues se hizo usando javascript y aqui con el aggregate se hizo usando puro mongodb, y entonces el find que se comentó arriba resultaría en lo mismo que este aggregate de abajo ya teniendo en cuenta lo que se puso en la funcion toJSON del modelo, la cual sí se ejecutaría para lo retornado con el find de arriba, pero ya con eso tanto el find de arriba como el aggregate de abajo resultarían en l misma respuesta JSON, checar lo que se explica en este aggregate
     //OJO que el ordenar del anterior find y el del siguiente aggregate tendrán unas pequeñas diferencias ya que el find de arriba como es un find no se le puede agregar atributos y por lo tanto no podemos ordenar por edad ya que el atributo edad no existe en el modelo de usuario, se puede agregar ese atributo de edad en la funcion toJSON del modelo si usamos el find de arriba, pero en ese punto de esa funcion del toJSON no se puede saber qué atributo queremos ordenar, asi que con el find de arriba no se podrá ordenar por edad, pero con el aggregate de abajo sí se puede
-    const usuarios = yield usuario_1.default.aggregate([
+    const usuarios = yield models_1.Usuario.aggregate([
         //NOTA: abajo vemos se comentó el $addFields porque eso se puso en la funcion del UsuarioSchema.pre('aggregate', function() {}) que está en el modelo del usuario en el archivo usuario.ts de la carpeta models, ya que hemos visto (en el curso de react en la parte del backend del proyecto del calendar se ve esto) que con el pre se ejecuta un middleware, osea una funcion que se hace antes de algo, y con el pre es una funcion que se hace antes o durante la ejecucion de algun metodo como el find (con el UsuarioSchema.pre('find'....)), findOne o aggregate en este caso, pero como ahí estamos poniendo ese pre con el UsuarioSchema entonces esa funcion se ejecutaría cada vez que usemos el modelo del Usuario, no de otro modelo, osea si ponemos UsuarioSchema.pre('aggregate'...) esa funcion se ejecutaría cada vez que pongamos Usuario.aggregate([]), o si ponemos UsuarioSchema.pre('find'...) entonces esa funcion se ejecutaría cada vez que ponemos Usuario.find({}) , pero solo de es esquema y del metodo que especifiquemos en el primer parametro del pre pues, asi que en ese archivo del modelo del usuario pusimos el pre para el aggregate, por lo tanto se va a ejecutar esa funcion antes de que el aggregate retorne algo, por eso se llama pre, y ahi vemos que pusimos this.pipeline(), eso obtiene el array puesto dentro del aggregate, ya que ese array es el pipeline o pipelineStage[] del aggregate como se explicó arriba, y vemos que entonces a ese array obtenido con el this.pipeline() le agregamos al inicio de ese array el mismo objeto con el $addFields, y asi es como si ese objeto con el $addFields que se comentó abajo no se hubiera comentado, es como si lo tuviera ahi porque ahi en esa funcion del pre se le agrega antes de que este aggregate retorne algo, mientras se está ejecutando, y tambien existe el post en lugar del pre que se ejecuta ya que se ha retornado algo, osea el UsuarioSchema.post('aggregate'....) se ejecutaría ya que el aggregate haya retornado algo, aunque pues es mas usado el pre. Y asi entonces se ejecutaría esa funcion que está en el modelo del usuario cada vez que pongamos Usuario.aggregate en cualquier archivo del proyecto
         // {
         //     $addFields: { //el $addFields sirve para agregar un atributo dentro de este aggregate, que en este caso es el atributo llamado edad que tendrá el mismo resultado que se retorna en el objeto de la variable edadCalculo vista arriba, y digo que se añadirá ese atributo dentro  de este aggregate porque despues de esto se podrán hacer cosas con este atributo de edad como hacer filtros por este atributo o mas cosas incluso aunque este atributo de edad no exista en el modelo de usuario, esto es algo que el find, fingOne y findById de mongoose no puede hacer como se explicó arriba, y tambien este atributo de edad puede estar en los objetos del array retornado por el aggregate si en el $project de mas abajo dentro de este aggregate se le pone edad: true para que este atributo creado aqui se ponga en cada objeto del array que vaya a retornar este aggregate
@@ -288,7 +289,7 @@ const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function
         // },
     ]);
     // usuarios = usuarios.map(u => new Usuario(u)); //esto se intentó hacer pero no resultó para convertir bien el objeto retornado por el aggregate (en este caso un array) a una instancia del modelo de usuario, esto se explicó arriba, asi que no hacer esto
-    const total = yield usuario_1.default.countDocuments({
+    const total = yield models_1.Usuario.countDocuments({
         estado: true,
         $or: filtroBusqueda,
         $expr: {
@@ -298,7 +299,7 @@ const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function
             ]
         }
     });
-    const docs = yield usuario_1.default.aggregate([
+    const docs = yield models_1.Usuario.aggregate([
         //el siguiente $addFields se comentó por lo que se explicó mas arriba
         // {
         //     $addFields: {
@@ -353,7 +354,7 @@ const obtenerUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
     }
     // const usuario = await Usuario.findById(id); //asi podríamos obtener el usuario por su id, pero OJO que con esto no podríamos obtener los libros de este usuario, y no podríamos usar el populate porque el populate solo funciona cuando tenemos el atributo de union entre colecciones en el modelo de usuario en este caso, pero vemos que en el models de usuario en el archivo usuario.ts de la carpeta models no hay ningun atributo que una a sus libros, asi que no podemos obtener los libros del usuario usando el populate aqui, asi que una solucion a esto podría ser usar la funcion toJSON del modelo de usuario y ahi agregarle un atributo de libros por ejemplo y usar ahi el modelo de los libros para encontrar los libros de ese usuario por su id, tambien otra solucion podría ser hacer aqui manualmente de agregarle a ese usuario sus libros transformando lo que retorne esta linea a objeto normal de javascript como usar el metodo lean() por ejemplo que se ve arriba, y otra solucion que es la que se usó abajo es hacer un left join con el $lookup de mongodb usando el aggregate que se vio mas arriba, abajo se explica esto y asi podremos acceder al modelo de libros uniendo los usuarios con sus libros por medio del id del usuario con el atributo usuario del modelo de libro del archivo libro.ts de la carpeta models, ya que ese atributo de usuario del modelo de libro tiene el id del usuario al que le corresponde, entonces asi podemos hacer el left join con el $lookup (el $lookup siempre hará un left join y retornará siempre un array y los usuarios que no tengan libros relacionados pues aparecerán con el atributo de union que genera el $lookup como un array vacio (solo ese atributo de union) y si queremos hacer un inner join pues podemos hacer un filtro con el $match del aggregate para excluir a los usuarios que en su atributo de union generado por el $lookup que tengan un array vacio y asi ya tendríamos el inner join), checar abajo la explicacion del $lookup del aggregate
-    const usuario = yield usuario_1.default.aggregate([
+    const usuario = yield models_1.Usuario.aggregate([
         {
             $match: {
                 _id: new objectId('64e9a31043ef7c77b2936a9c')
@@ -481,7 +482,7 @@ const obtenerUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.obtenerUsuario = obtenerUsuario;
 const actualizarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const usuario = yield usuario_1.default.findById(id);
+    const usuario = yield models_1.Usuario.findById(id);
     const { id: idLogueado } = req.payload;
     if (usuario.id.toString() != idLogueado) { //los administradores tampoco pueden modificar el usuario de alguien mas, solo pueden borrar el usuario de alguien mas o convertir a un usuario que no sea administrador en administrador, pero tanto los administradores como los no administradores solo pueden actualizar su propio usuario
         return res.status(401).json({
@@ -489,7 +490,7 @@ const actualizarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, functi
             error: 'No puede modificar un usuario que no le pertenece'
         });
     }
-    const _b = req.body, { rol, estado, passwordNew, passwordOld } = _b, body = __rest(_b, ["rol", "estado", "passwordNew", "passwordOld"]);
+    const _b = req.body, { rol, estado, passwordNew, passwordOld, img } = _b, body = __rest(_b, ["rol", "estado", "passwordNew", "passwordOld", "img"]);
     const passwordCoincide = bcryptjs_1.default.compareSync(passwordOld, usuario.password);
     if (!passwordCoincide) {
         return res.status(400).json({
@@ -497,7 +498,7 @@ const actualizarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, functi
             error: 'Contraseña incorrecta'
         });
     }
-    if (!(0, funciones_1.esPesoValido)(body.detalle.peso)) {
+    if (!(0, helpers_1.esPesoValido)(body.detalle.peso)) {
         return res.status(400).json({
             ok: true,
             error: 'No se proporcionó un peso valido'
@@ -505,9 +506,9 @@ const actualizarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
     const salt = bcryptjs_1.default.genSaltSync();
     body.password = bcryptjs_1.default.hashSync(passwordNew, salt);
-    body.nombre = (0, funciones_1.capitalizar)(body.nombre);
-    body.apellido = (0, funciones_1.capitalizar)(body.apellido);
-    const userActualizado = yield usuario_1.default.findByIdAndUpdate(usuario.id, body, { new: true });
+    body.nombre = (0, helpers_1.capitalizar)(body.nombre);
+    body.apellido = (0, helpers_1.capitalizar)(body.apellido);
+    const userActualizado = yield models_1.Usuario.findByIdAndUpdate(usuario.id, body, { new: true });
     return res.status(201).json({
         ok: true,
         data: userActualizado
@@ -516,7 +517,7 @@ const actualizarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, functi
 exports.actualizarUsuario = actualizarUsuario;
 const actualizarUsuarioRol = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { ids, rol } = req.body;
-    const resp = yield usuario_1.default.updateMany({
+    const resp = yield models_1.Usuario.updateMany({
         _id: {
             $in: [...ids]
         }
@@ -554,7 +555,7 @@ const borrarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     else {
-        const usuarios = yield usuario_1.default.find({
+        const usuarios = yield models_1.Usuario.find({
             rol: {
                 $in: ['ROLE_ADMIN']
             },
@@ -568,7 +569,7 @@ const borrarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     // await Usuario.findByIdAndUpdate(id, { estado: false }); //NOTA: El usuario se pudo haber eliminado asi (en realidad no eliminado fisicamente de la base de datos sino actualizandolo con su atributo estado en false), pero al eliminar el usuario tambien debemos eliminarle sus libros y autores (y esos sí se eliminan fisicamente de la base de datos), entonces eso podemos hacerlo aqui mismo de eliminarle sus libros y autores a este usuario, pero hay otra manera de hacerlo y es eliminar en cascada, aunque en mongoose no existe como tal eso de que automaticamente si se elimina un documento que se eliminen tambien los documentos que tiene relacionados, eso en spring por ejemplo sí existe pero en mongoose no, pero para simular lo que sería realizar funciones en cascada sería usar la funcion pre en el modelo, en este caso en el modelo usuario del archivo usuario.ts de la carpeta models, y en esa funcion de pre ponerle el metodo que estamos ejecutando aqui de modo que esa funcion de pre se va a ejecutar automaticamente cuando se esté ejecutando este metodo de aqui, osea la funcion de pre es un middleware, y entonces ahi en esa funcion de pre se puede eliminar los libros y autores de este usuario y aqui solo eliminar el puro usuario y ya, aunque esta linea se comentó porque todo lo que es encontrar por id no funciona con el pre, osea a la funcion pre no se le puede poner el metodo de findById, ni findByIdAndUpdate ni findByIdAndDelete, pero sí podemos ponerle los demas metodos como el updateOne, y por eso esta linea se comentó y se puso el updateOne de la siguiente linea, para que pusieramos ese metodo de updateOne en la funcion pre del modelo de usuario donde pusimos UsuarioSquema.pre('updateOne', function(next) {}), y se pone function siempre a las funciones que pongamos dentro de los modelos como el pre o el toJSON porque asi podemos usar el this, osea el objeto del modelo para que asi podamos acceder a los valores de los atributos de ese modelo ya que nos podrían ser utiles ahi, y pues con una funcion de flecha no se puede acceder al this ahí, ya que pues no están dentro de una clase y eso se vio en la parte 2 del curso de javascript, y vemos ahi que al function le pusimos como parametro next y eso es para decirle que continue para que haga esta operacion de aqui ya que si no le ponemos eso entonces no hará la operacion de aqui, por eso es importante ponerle ese next y ese next solo se pone para los metodos que modifiquen la base de datos como este updateOne, o para el findOneAndDelete por ejemplo, o updateMany y asi, pero no para los que solo retornan informacion pero no modifican nada como el find o findOne, y tambien ese parametro de next se pone para la funcion pre con el metodo de 'validate', osea UsuarioSchema.pre('validate', function(next) {}), y ese de validate no modifica la base de datos pero se ejecuta justo antes de hacer alguna modificacion a la base de datos y pues hace una validacion antes de hacer esa modificacion 
-    yield usuario_1.default.updateOne({
+    yield models_1.Usuario.updateOne({
         _id: new objectId(id),
     }, {
         estado: false
@@ -576,4 +577,51 @@ const borrarUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     return res.status(204).json(); //asi no se retorna ningun contenido, solo el status 204 de No Content
 });
 exports.borrarUsuario = borrarUsuario;
+const subirFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.files || Object.keys(req.files).length === 0 || !req.files.archivo) { //si no se subió ningun archivo, o con el nombre 'archivo'
+        return res.status(400).json({
+            msg: 'no se subió ningun archivo'
+        });
+    }
+    try {
+        const { id } = req.params;
+        const user = yield models_1.Usuario.findById(id);
+        if (user.img) {
+            const pathImagen = path_1.default.join(__dirname, '../uploads', user.id, user.img);
+            if (fs_1.default.existsSync(pathImagen)) {
+                fs_1.default.unlinkSync(pathImagen);
+            }
+        }
+        const nombreImg = yield (0, helpers_1.subirArchivo)(req.files, undefined, user.id);
+        user.img = nombreImg;
+        yield user.save();
+        const usuario = yield models_1.Usuario.findById(user.id);
+        res.status(201).json({
+            ok: true,
+            data: usuario
+        });
+    }
+    catch (err) {
+        res.status(400).json({
+            ok: false,
+            error: {
+                mensaje: 'No se pudo subir la foto'
+            }
+        });
+    }
+});
+exports.subirFoto = subirFoto;
+const mostrarFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const usuario = yield models_1.Usuario.findById(id);
+    if (usuario.img) {
+        const pathImage = path_1.default.join(__dirname, '../uploads', usuario.id, usuario.img);
+        if (fs_1.default.existsSync(pathImage)) {
+            return res.sendFile(pathImage);
+        }
+    }
+    const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg');
+    res.sendFile(pathImage);
+});
+exports.mostrarFoto = mostrarFoto;
 //# sourceMappingURL=usuarios.js.map

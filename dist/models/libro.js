@@ -39,6 +39,10 @@ const LibroSchema = new mongoose_1.Schema({
         type: Number,
         required: true,
         enum: [1, 0]
+    },
+    img: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

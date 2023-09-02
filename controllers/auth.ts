@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Usuario from "../models/usuario";
+import { Usuario } from "../models";
 import bcrypt from 'bcryptjs';
-import generarJWT from "../helpers/generar-jwt";
+import { generarJWT } from "../helpers";
 import { tokenUsuario } from "../interfaces/usuario";
 
 const iniciarSesion = async (req: Request, res: Response) => {

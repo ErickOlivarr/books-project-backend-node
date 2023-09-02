@@ -8,15 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.existeId = void 0;
-const libro_1 = __importDefault(require("../../models/libro"));
+const models_1 = require("../../models");
 const existeId = (id, { req }) => __awaiter(void 0, void 0, void 0, function* () {
     const { id: idLogueado } = req.payload;
-    const libro = yield libro_1.default.findById(id);
+    const libro = yield models_1.Libro.findById(id);
     if (!libro) {
         throw new Error('No existe un libro con este id');
     }

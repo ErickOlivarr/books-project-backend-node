@@ -8,13 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validarIdsAurores = void 0;
 const mongoose_1 = require("mongoose");
-const autor_1 = __importDefault(require("../models/autor"));
+const models_1 = require("../models");
 const objectId = mongoose_1.Types.ObjectId;
 const validarIdsAurores = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { autores } = req.body;
@@ -26,7 +23,7 @@ const validarIdsAurores = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         });
     }
     const { id: idLogueado } = req.payload;
-    const array = idArray.map(id => autor_1.default.findOne({ _id: id, usuario: idLogueado }));
+    const array = idArray.map(id => models_1.Autor.findOne({ _id: id, usuario: idLogueado }));
     const resultArray = yield Promise.all([...array]);
     if (resultArray.some(result => result === null || result === undefined)) {
         return res.status(400).json({

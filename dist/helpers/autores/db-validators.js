@@ -8,22 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.existeId = exports.existeNombreYApellido = void 0;
-const autor_1 = __importDefault(require("../../models/autor"));
+const models_1 = require("../../models");
 const mongoose_1 = require("mongoose");
-const funciones_1 = require("../funciones");
+const __1 = require("../");
 const objectId = mongoose_1.Types.ObjectId;
 const existeNombreYApellido = (nombre, { req }) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { id: idLogueado } = req.payload;
     const metodo = req.method; //asi se puede saber el metodo http que invocamos al llegar a esta funcion
-    nombre = (0, funciones_1.capitalizar)(nombre);
-    const apellido = (0, funciones_1.capitalizar)(req.body.apellido);
-    const autor = yield autor_1.default.findOne({
+    nombre = (0, __1.capitalizar)(nombre);
+    const apellido = (0, __1.capitalizar)(req.body.apellido);
+    const autor = yield models_1.Autor.findOne({
         nombre,
         apellido,
         usuario: idLogueado,
@@ -54,7 +51,7 @@ const existeNombreYApellido = (nombre, { req }) => __awaiter(void 0, void 0, voi
 exports.existeNombreYApellido = existeNombreYApellido;
 const existeId = (id, { req }) => __awaiter(void 0, void 0, void 0, function* () {
     const { id: idLogueado } = req.payload;
-    const autor = yield autor_1.default.findById(id);
+    const autor = yield models_1.Autor.findById(id);
     if (!autor) {
         throw new Error('No existe un autor con este id');
     }

@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
 import moment from 'moment';
-import Autor from "../models/autor";
+import { Autor, Libro } from "../models";
 import { tokenUsuario } from "../interfaces/usuario";
-import { capitalizar, esFechaValida } from "../helpers/funciones";
+import { capitalizar, esFechaValidaFuncion } from "../helpers";
 import { AutorObjeto } from "../interfaces/autor";
 import mongoose, { Types, ObjectId, ClientSession } from 'mongoose';
-import Libro from "../models/libro";
 const objectId = Types.ObjectId;
 
 
@@ -16,7 +15,7 @@ const crearAutor = async (req: Request, res: Response) => {
 
     let fechaNac = null;
     if(birthday) {
-        if(!esFechaValida(birthday)) {
+        if(!esFechaValidaFuncion(birthday)) {
             return res.status(400).json({
                 ok: false,
                 error: 'Se debe proporcionar una fecha valida, en numero positivo'
@@ -50,7 +49,7 @@ const actualizarAutor = async (req: Request, res: Response) => {
     
     let fechaNac = null;
     if(birthday) {
-        if(!esFechaValida(birthday)) {
+        if(!esFechaValidaFuncion(birthday)) {
             return res.status(400).json({
                 ok: false,
                 error: 'Se debe proporcionar una fecha valida, en numero positivo'

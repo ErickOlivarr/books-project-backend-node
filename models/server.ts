@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import { conexion } from '../db/config';
 import { autorRouter, libroRouter, usuarioRouter, authRouter } from '../routers'
+import fileUpload from 'express-fileupload';
 
 class Server {
 
@@ -36,6 +37,13 @@ class Server {
         this.app.use(express.json());
 
         this.app.use(express.static('public'));
+
+        this.app.use(fileUpload({
+            useTempFiles : true, //esto es obligatorio ponerlo para guardar archivos
+            tempFileDir : '/tmp/', //esto es obligatorio ponerlo para guardar archivos
+            //limits: { fileSize: 50 * 1024 * 1024 } //esto tambien se puede poner opcionalmente para ponerle un limite de tamño a los archivos que carguemos
+            createParentPath: true //esto es opcional ponerlo para guardar archivos, y esto hace que si no existe la carpeta sobre la que queremos guardar el archivo que se cree automaticamente, esto por default está en false y eso significa que tenemos que crear las carpetas donde guardaremos los archivos manualmente, pero con esto en true pues crea esa carpeta automaticamente en caso que no exista y si existe pues no hace nada
+        }));
     };
 
     private rutas = () => {

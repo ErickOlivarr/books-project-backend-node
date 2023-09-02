@@ -1,7 +1,6 @@
 import { Schema, model } from 'mongoose';
 import moment from 'moment';
-import Autor from './autor';
-import Libro from './libro';
+import { Autor, Libro } from './';
 import { Types, } from 'mongoose';
 const objectId = Types.ObjectId;
 
@@ -45,6 +44,10 @@ const UsuarioSchema = new Schema({
             type: Number,
             default: 0
         },
+    },
+    img: {
+        type: String,
+        default: null
     }
 
 });
@@ -131,7 +134,7 @@ UsuarioSchema.pre('updateOne', async function(next) { //esto se explicó en la f
 });
 
 UsuarioSchema.method('toJSON', function() {
-    const { __v, _id, password, estado, detalle, detalle:{peso}, detalle:{fechaNacimiento}, ...objeto } = this.toObject();
+    const { __v, _id, password, estado, img, detalle, detalle:{peso}, detalle:{fechaNacimiento}, ...objeto } = this.toObject();
     
     objeto.nombre = `${objeto.nombre} ${objeto.apellido}`;
     delete objeto.apellido; //eliminamos el atributo apellido de la respuesta JSON

@@ -1,7 +1,7 @@
-import Autor from "../../models/autor";
+import { Autor } from "../../models";
 import { tokenUsuario } from "../../interfaces/usuario";
 import { Types, ObjectId, Schema } from 'mongoose';
-import { capitalizar } from "../funciones";
+import { capitalizar } from "../";
 import { AutorObjeto } from "../../interfaces/autor";
 const objectId = Types.ObjectId;
 

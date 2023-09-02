@@ -1,9 +1,9 @@
 import Usuario from '../../models/usuario';
-import Rol from '../../models/rol';
+import { Rol } from '../../models';
 import moment from 'moment';
 import { Types, ObjectId, Schema } from 'mongoose';
 import { UsuarioObjeto, tokenUsuario } from '../../interfaces/usuario';
-import { capitalizar } from '../funciones';
+import { capitalizar } from '../';
 const objectId = Types.ObjectId;
 
 //NOTA: si la funcion que se ponga dentro de un custom del express-validator en los routers es async entonces para generar un error pero para validarlo en el archivo validar-campos.ts de la carpeta middlewares se pone throw new Error como se vio en las lecciones del curso de node js, y ya con eso, no hace falta que le pongamos nada para decir que está bien todo, y en cambio si la funcion no es async entonces forzozamente se debe retornar un true para que avance y no retorne error, y se debe retornar false para que se tenga un error y se valide en el validar-campos.ts, tal como se ve en el backend de express de la carpeta 09-calendar-backend del curso de react

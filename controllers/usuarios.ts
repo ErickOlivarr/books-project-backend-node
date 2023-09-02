@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
-import Usuario from '../models/usuario';
+import { Usuario } from '../models';
 import bcrypt from 'bcryptjs';
 import { UsuarioObjeto, UsuarioUpdateBody, tokenUsuario } from '../interfaces/usuario';
-import generarJWT from '../helpers/generar-jwt';
+import { generarJWT, capitalizar, esPesoValido, subirArchivo } from '../helpers';
 import { Types, ObjectId } from 'mongoose';
-import { capitalizar, esPesoValido } from '../helpers/funciones';
 const objectId = Types.ObjectId;
+import path from 'path';
+import fs from 'fs';
 
 // const esPesoValido = (peso: any): boolean => {
 //     if(peso) {
@@ -30,7 +31,7 @@ const objectId = Types.ObjectId;
 
 const crearUsuario = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
 
-    const { estado, password, rol, ...user } = req.body as UsuarioObjeto;
+    const { estado, password, rol, img, ...user } = req.body as UsuarioObjeto;
 
     try {
 
@@ -505,7 +506,7 @@ const actualizarUsuario = async (req: Request, res: Response): Promise<Response<
         });
     }
 
-    const { rol, estado, passwordNew, passwordOld, ...body } = req.body as UsuarioUpdateBody;
+    const { rol, estado, passwordNew, passwordOld, img, ...body } = req.body as UsuarioUpdateBody;
 
     const passwordCoincide = bcrypt.compareSync(passwordOld, usuario.password);
     if(!passwordCoincide) {
@@ -608,11 +609,71 @@ const borrarUsuario = async (req: Request, res: Response): Promise<Response<any,
 };
 
 
+const subirFoto = async (req: Request, res: Response) => {
+    if (!req.files || Object.keys(req.files).length === 0 || !req.files.archivo) { //si no se subió ningun archivo, o con el nombre 'archivo'
+        return res.status(400).json({
+          msg: 'no se subió ningun archivo'
+        });
+    }
+
+    try {
+        const { id } = req.params;
+        const user = await Usuario.findById(id);
+
+        if(user.img) {
+            const pathImagen = path.join( __dirname, '../uploads', user.id, user.img );
+            if(fs.existsSync(pathImagen)) {
+                fs.unlinkSync(pathImagen);
+            }
+        }
+
+        const nombreImg: string = await subirArchivo(req.files, undefined, user.id);
+        user.img = nombreImg;
+
+        await user.save();
+
+        const usuario = await Usuario.findById(user.id);
+
+        res.status(201).json({
+            ok: true,
+            data: usuario
+        });
+
+    } catch(err) {
+        res.status(400).json({
+            ok: false,
+            error: {
+                mensaje: 'No se pudo subir la foto'
+            }
+        });
+    }
+};
+
+const mostrarFoto = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const usuario = await Usuario.findById(id);
+
+    if(usuario.img) {
+        const pathImage = path.join( __dirname, '../uploads', usuario.id, usuario.img );
+        if(fs.existsSync(pathImage)) {
+            return res.sendFile(pathImage);
+        }
+    }
+
+    const pathImage = path.join( __dirname, '../assets/no-image.jpg' );
+    res.sendFile(pathImage);
+
+};
+
+
 export {
     crearUsuario,
     obtenerUsuarios,
     obtenerUsuario,
     actualizarUsuario,
     borrarUsuario,
-    actualizarUsuarioRol
+    actualizarUsuarioRol,
+    subirFoto,
+    mostrarFoto
 };

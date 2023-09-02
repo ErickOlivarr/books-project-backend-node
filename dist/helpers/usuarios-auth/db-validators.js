@@ -14,16 +14,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validarIds = exports.existeId = exports.existeEmailAuth = exports.esFechaValida = exports.esRolValido = exports.existeEmail = exports.existeNombreYApellido = void 0;
 const usuario_1 = __importDefault(require("../../models/usuario"));
-const rol_1 = __importDefault(require("../../models/rol"));
+const models_1 = require("../../models");
 const moment_1 = __importDefault(require("moment"));
 const mongoose_1 = require("mongoose");
-const funciones_1 = require("../funciones");
+const __1 = require("../");
 const objectId = mongoose_1.Types.ObjectId;
 //NOTA: si la funcion que se ponga dentro de un custom del express-validator en los routers es async entonces para generar un error pero para validarlo en el archivo validar-campos.ts de la carpeta middlewares se pone throw new Error como se vio en las lecciones del curso de node js, y ya con eso, no hace falta que le pongamos nada para decir que está bien todo, y en cambio si la funcion no es async entonces forzozamente se debe retornar un true para que avance y no retorne error, y se debe retornar false para que se tenga un error y se valide en el validar-campos.ts, tal como se ve en el backend de express de la carpeta 09-calendar-backend del curso de react
 const existeNombreYApellido = (nombre, { req }) => __awaiter(void 0, void 0, void 0, function* () {
     const payload = req.payload; //si el usuario está logueado, osea si se va a actualizar el usuario, el payload existirá, pero si el usuario no está logueado, osea si se va a crear el usuario, el payload no existirá
-    nombre = (0, funciones_1.capitalizar)(nombre);
-    const apellido = (0, funciones_1.capitalizar)(req.body.apellido);
+    nombre = (0, __1.capitalizar)(nombre);
+    const apellido = (0, __1.capitalizar)(req.body.apellido);
     const usuario = yield usuario_1.default.findOne({
         nombre,
         apellido,
@@ -66,12 +66,12 @@ exports.existeEmail = existeEmail;
 const esRolValido = (rol) => __awaiter(void 0, void 0, void 0, function* () {
     let condicion = false;
     if (!Array.isArray(rol)) {
-        const theRol = yield rol_1.default.findOne({ rol });
+        const theRol = yield models_1.Rol.findOne({ rol });
         condicion = !!theRol;
     }
     else {
         for (let roleOne of rol) {
-            const theRol = yield rol_1.default.findOne({
+            const theRol = yield models_1.Rol.findOne({
                 rol: {
                     $in: [
                         roleOne

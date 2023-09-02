@@ -1,13 +1,17 @@
 import { Request, Response } from "express";
-import Libro from "../models/libro";
-import Autor from "../models/autor";
+import { Libro, Autor } from "../models";
 import { LibroObjeto } from "../interfaces/libro";
 import { AutorObjeto } from "../interfaces/autor";
 import { tokenUsuario } from "../interfaces/usuario";
-import mongoose, { ClientSession, SortOrder } from "mongoose";
-import { Types, ObjectId } from 'mongoose';
-import { capitalizar } from "../helpers/funciones";
+import mongoose, { ClientSession, SortOrder, Types, ObjectId } from "mongoose";
+import { capitalizar } from "../helpers";
 const objectId = Types.ObjectId;
+import cloud from 'cloudinary';
+import { UploadedFile } from "express-fileupload";
+import path from 'path';
+const cloudinary = cloud.v2;
+cloudinary.config(process.env.CLOUDINARY_URL);
+
 
 const crearLibro = async (req: Request, res: Response) => {
     const { nombre, isbn, autores } = req.body as LibroObjeto;
@@ -22,7 +26,7 @@ const crearLibro = async (req: Request, res: Response) => {
 
     try {
 
-        const libro = new Libro({ ...(req.body), usuario: idLogueado, favorito: 0 }); //asi en la respuesta JSON en el objeto del libro en su atributo autores se mostrará solo los id, y con las siguientes 2 lineas en lugar de esta linea se mostrará todo el objeto de los autores, pero con el atributo libros de los autores como array vacio, asi lo retornará el metodo save() del libro abajo y el array está vacio en ese atributo de libros de los autores del libro guardado porque aun no le hemos añadido su libro respectivo como se hace mas abajo, aunque en la base de datos siempre esos atributos de relaciones se van a guardar como el id, aunque aqui le hayamos puesto todo el objeto y que en la respuesta JSON se muestre todo el objeto en ese atributo de relacion y no solo su id, aun asi en la base de datos se guardará solo el id
+        const libro = new Libro({ ...(req.body), usuario: idLogueado, favorito: 0, img: null }); //asi en la respuesta JSON en el objeto del libro en su atributo autores se mostrará solo los id, y con las siguientes 2 lineas en lugar de esta linea se mostrará todo el objeto de los autores, pero con el atributo libros de los autores como array vacio, asi lo retornará el metodo save() del libro abajo y el array está vacio en ese atributo de libros de los autores del libro guardado porque aun no le hemos añadido su libro respectivo como se hace mas abajo, aunque en la base de datos siempre esos atributos de relaciones se van a guardar como el id, aunque aqui le hayamos puesto todo el objeto y que en la respuesta JSON se muestre todo el objeto en ese atributo de relacion y no solo su id, aun asi en la base de datos se guardará solo el id
         // const au = await Promise.all([ ...autores.map(id => Autor.findById(id)) ]);
         // const libro = new Libro({ nombre, isbn, usuario, autores: au }); 
         await libro.save({ session }); //siempre que estamos dentro de transacciones se debe referenciar a la variable session creada arriba en todas nuestras consultas de guardar como esta, actualizar, eliminar y tambien para los que solo retornan algo como el find, findOne o findById como el findById de abajo que tambien le pusimos esto de session, si no retornaría null
@@ -87,7 +91,7 @@ const crearLibro = async (req: Request, res: Response) => {
 };
 
 const actualizarLibro = async (req: Request, res: Response) => {
-    const { usuario, ...body } = req.body;
+    const { usuario, img, ...body } = req.body;
     const { id } = req.params;
     const { id: idLogueado } = (req as any as tokenUsuario).payload;
 
@@ -369,6 +373,66 @@ const obtenerFavoritos = async (req: Request, res: Response) => {
 };
 
 
+const subirFoto = async (req: Request, res: Response) => {
+    if (!req.files || Object.keys(req.files).length === 0 || !req.files.archivo) { //si no se subió ningun archivo, o con el nombre 'archivo'
+        return res.status(400).json({
+          msg: 'no se subió ningun archivo'
+        });
+    }
+
+    try {
+        const { id } = req.params;
+
+        const libro = await Libro.findById(id);
+
+        if(libro.img) {
+            const nombreArr = libro.img.split('/');
+            const nombre = nombreArr[nombreArr.length - 1];
+            const [ public_id ] = nombre.split('.');
+
+            cloudinary.uploader.destroy(public_id);
+        }
+
+        const { tempFilePath } = req.files.archivo as UploadedFile;
+        const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+
+        libro.img = secure_url;
+
+        await libro.save();
+
+        const book = await Libro.findById(libro.id).populate('autores', [ 'nombre', 'apellido' ]);
+        
+        res.status(201).json({
+            ok: true,
+            data: book
+        });
+
+    } catch(err) {
+        res.status(400).json({
+            ok: false,
+            error: {
+                mensaje: 'No se pudo subir la foto'
+            }
+        });
+    }
+
+};
+
+const mostrarFoto = async (req: Request, res: Response) => { //con cloudinary
+    const { id } = req.params;
+
+    const libro = await Libro.findById(id);
+
+    if(libro.img) {
+        return res.sendFile(libro.img);
+    }
+
+    const pathImage = path.join( __dirname, '../assets/no-image.jpg' );
+    res.sendFile(pathImage);
+
+};
+
+
 export {
     crearLibro,
     actualizarLibro,
@@ -376,5 +440,7 @@ export {
     obtenerLibros,
     obtenerLibro,
     añadirFavorito,
-    obtenerFavoritos
+    obtenerFavoritos,
+    subirFoto,
+    mostrarFoto
 };

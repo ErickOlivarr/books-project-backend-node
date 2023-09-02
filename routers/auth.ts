@@ -1,10 +1,8 @@
 import Router from 'express';
-import { iniciarSesion, renovarToken } from '../controllers/auth';
+import { iniciarSesion, renovarToken } from '../controllers';
 import { check } from 'express-validator';
-import { existeEmailAuth } from '../helpers/usuarios-auth/db-validators';
-import validarCampos from '../middlewares/validar-campos';
-import validarJWT from '../middlewares/validar-jwt';
-import validarEliminado from '../middlewares/validar-eliminado';
+import { existeEmailAuth } from '../helpers';
+import { validarCampos, validarJWT, validarEliminado } from '../middlewares';
 
 const router = Router();
 

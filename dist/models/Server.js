@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const config_1 = require("../db/config");
 const routers_1 = require("../routers");
+const express_fileupload_1 = __importDefault(require("express-fileupload"));
 class Server {
     constructor() {
         this.paths = {
@@ -31,6 +32,12 @@ class Server {
             this.app.use((0, cors_1.default)());
             this.app.use(express_1.default.json());
             this.app.use(express_1.default.static('public'));
+            this.app.use((0, express_fileupload_1.default)({
+                useTempFiles: true,
+                tempFileDir: '/tmp/',
+                //limits: { fileSize: 50 * 1024 * 1024 } //esto tambien se puede poner opcionalmente para ponerle un limite de tamño a los archivos que carguemos
+                createParentPath: true //esto es opcional ponerlo para guardar archivos, y esto hace que si no existe la carpeta sobre la que queremos guardar el archivo que se cree automaticamente, esto por default está en false y eso significa que tenemos que crear las carpetas donde guardaremos los archivos manualmente, pero con esto en true pues crea esa carpeta automaticamente en caso que no exista y si existe pues no hace nada
+            }));
         };
         this.rutas = () => {
             this.app.use(this.paths.auth, routers_1.authRouter);

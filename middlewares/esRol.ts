@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { tokenUsuario } from "../interfaces/usuario";
-import Usuario from "../models/usuario";
+import { Usuario } from "../models";
 
 const esRol = (...rol: string[]) => {
     return async (req: Request, res: Response, next: NextFunction) => {

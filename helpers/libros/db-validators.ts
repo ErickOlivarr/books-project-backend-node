@@ -1,5 +1,5 @@
 import { ObjectId } from "mongoose";
-import Libro from "../../models/libro";
+import { Libro } from "../../models";
 import { tokenUsuario } from "../../interfaces/usuario";
 
 const existeId = async (id: ObjectId, { req }) => {
