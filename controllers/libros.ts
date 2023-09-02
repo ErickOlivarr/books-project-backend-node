@@ -381,7 +381,7 @@ const subirFoto = async (req: Request, res: Response) => {
         });
     }
 
-    // try {
+    try {
         const { id } = req.params;
 
         const libro = await Libro.findById(id);
@@ -389,14 +389,14 @@ const subirFoto = async (req: Request, res: Response) => {
         if(libro.img) {
             const nombreArr = libro.img.split('/');
             const nombre = nombreArr[nombreArr.length - 1];
-            const [ public_id ] = nombre.split('.');
+            const [ public_id ] = nombre.split('.'); //asi obtenemos lo que es el id de la imagen que se subió a cloudinary, con ese id podemos eliminar la imagen como se ve abajo
 
-            cloudinary.uploader.destroy('Proyecto books/' + libro.id + '/' + public_id); //asi eliminamos la imagen pero de la carpeta con el nombre del id del libro que esté dentro de la carpeta llamada Proyecto books, si quisieramos eliminar una imagen de la raiz de cloudinary (que está aqui: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home) entonces no hubieramos puesto lo de 'Proyecto books/' + libro.id + '/' , solo hubieramos puesto el puro archivo de la imagen y ya
+            cloudinary.uploader.destroy('Proyecto books/' + libro.usuario + '/' + public_id); //asi eliminamos la imagen pero de la carpeta con el nombre del id del usuario que contiene el libro, y esa carpeta está dentro de la carpeta llamada Proyecto books, si quisieramos eliminar una imagen de la raiz de cloudinary (que está aqui: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home) entonces no hubieramos puesto lo de 'Proyecto books/' + libro.usuario + '/' , solo hubieramos puesto el puro archivo de la imagen y ya
         }
 
         const { tempFilePath } = req.files.archivo as UploadedFile;
-        const { secure_url } = await cloudinary.uploader.upload(tempFilePath, { folder: 'Proyecto books/' + libro.id });
-        //con la anterior linea se agrega el archivo de la imagen pero no en la raiz del media library del cloudinary (en esta pagina: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home), sino que se agrega en una carpeta de cloudinary con el nombre del id del libro, y esa carpeta estará dentro de una carpeta llamada Proyecto books, y si ambas carpetas no existen o una de ellas no existe entonces se crean, y ahí se guardará la imagen, y si quisieramos guardar sobre la raiz de cloudinary entonces no hubieramos puesto el segundo parametro con el objeto con el atributo folder, solo hubieramos puesto el primer parametro y ya
+        const { secure_url } = await cloudinary.uploader.upload(tempFilePath, { folder: 'Proyecto books/' + libro.usuario });
+        //con la anterior linea se agrega el archivo de la imagen pero no en la raiz del media library del cloudinary (en esta pagina: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home), sino que se agrega en una carpeta de cloudinary con el nombre del id del usuario que tiene el libro, y esa carpeta estará dentro de una carpeta llamada Proyecto books, y si ambas carpetas no existen o una de ellas no existe entonces se crean, y ahí se guardará la imagen, se hizo de esta manera para que en cloudinary tuvieramos ordenado por carpetas de cada usuario, y en esas carpetas pues estarán todos los libros de ese usuario, y si quisieramos guardar sobre la raiz de cloudinary entonces no hubieramos puesto el segundo parametro con el objeto con el atributo folder, solo hubieramos puesto el primer parametro y ya
 
         libro.img = secure_url;
 
@@ -409,14 +409,14 @@ const subirFoto = async (req: Request, res: Response) => {
             data: book
         });
 
-    // } catch(err) {
-    //     res.status(400).json({
-    //         ok: false,
-    //         error: {
-    //             mensaje: 'No se pudo subir la foto'
-    //         }
-    //     });
-    // }
+    } catch(err) {
+        res.status(400).json({
+            ok: false,
+            error: {
+                mensaje: 'No se pudo subir la foto'
+            }
+        });
+    }
 
 };
 
