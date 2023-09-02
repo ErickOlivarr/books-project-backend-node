@@ -275,6 +275,7 @@ const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function
                 },
                 detalle: true,
                 edad: true,
+                // img: true
                 //vemos que aqui no pusimos el atributo del peso en true, ese creado arriba con el $addFields, ya que en realidad no nos interesa retornar ese atributo ya que ya lo tiene el atributo detalle, ese atributo del peso creado arriba con el $addFields solo lo creamos para que fuera como un comodin para poder ordenar con el $sort tambien el peso 
             }
         },
@@ -440,6 +441,7 @@ const obtenerUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function*
                             nombre: true,
                             // isbn: true,
                             autores: true,
+                            img: true
                         }
                     },
                 ]
@@ -586,6 +588,13 @@ const subirFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const user = yield models_1.Usuario.findById(id);
+        const { id: idLogueado } = req.payload;
+        if (user.id.toString() != idLogueado) { //los administradores tampoco pueden modificar el usuario de alguien mas, solo pueden borrar el usuario de alguien mas o convertir a un usuario que no sea administrador en administrador, pero tanto los administradores como los no administradores solo pueden actualizar su propio usuario
+            return res.status(401).json({
+                ok: false,
+                error: 'No puede modificar un usuario que no le pertenece'
+            });
+        }
         if (user.img) {
             const pathImagen = path_1.default.join(__dirname, '../uploads', user.id, user.img);
             if (fs_1.default.existsSync(pathImagen)) {
@@ -614,13 +623,20 @@ exports.subirFoto = subirFoto;
 const mostrarFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const usuario = yield models_1.Usuario.findById(id);
+    const { id: idLogueado, rol } = req.payload;
+    if (usuario.id.toString() != idLogueado && !rol.includes('ROLE_ADMIN')) { //solo los administradores pueden ver la foto de alguien mas
+        return res.status(403).json({
+            ok: false,
+            error: 'No tiene acceso a este recurso'
+        });
+    }
     if (usuario.img) {
         const pathImage = path_1.default.join(__dirname, '../uploads', usuario.id, usuario.img);
         if (fs_1.default.existsSync(pathImage)) {
             return res.sendFile(pathImage);
         }
     }
-    const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg');
+    const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg'); //OJO que aqui no se va a leer la carpeta assets del proyecto aqui con typescript, sino que se leerá la carpeta assets que esté dentro de la carpeta dist del proyecto ya que ahí es donde se ejecuta el codigo, aqui nosotros solo estamos usando typescript pero ya al ejecutarlo se ejecuta su parte equivalente a javascript que está dentro de la carpeta dist, asi que ahí debemos crear esa carpeta se assets junto con su archivo de no-image.jpg, ya que si no da error
     res.sendFile(pathImage);
 });
 exports.mostrarFoto = mostrarFoto;

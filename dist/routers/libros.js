@@ -57,8 +57,4 @@ router.put('/uploads/:id', [
     (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un libro que exista').isMongoId().custom(helpers_1.existeIdLibro),
     middlewares_1.validarCampos
 ], controllers_1.subirFotoLibro);
-router.get('/uploads/:id', [
-    (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un libro que exista').isMongoId().custom(helpers_1.existeIdLibro),
-    middlewares_1.validarCampos
-], controllers_1.mostrarFotoLibro);
 //# sourceMappingURL=libros.js.map

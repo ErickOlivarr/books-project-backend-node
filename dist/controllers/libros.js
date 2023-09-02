@@ -377,33 +377,33 @@ const subirFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             msg: 'no se subió ningun archivo'
         });
     }
-    try {
-        const { id } = req.params;
-        const libro = yield models_1.Libro.findById(id);
-        if (libro.img) {
-            const nombreArr = libro.img.split('/');
-            const nombre = nombreArr[nombreArr.length - 1];
-            const [public_id] = nombre.split('.');
-            cloudinary.uploader.destroy(public_id);
-        }
-        const { tempFilePath } = req.files.archivo;
-        const { secure_url } = yield cloudinary.uploader.upload(tempFilePath);
-        libro.img = secure_url;
-        yield libro.save();
-        const book = yield models_1.Libro.findById(libro.id).populate('autores', ['nombre', 'apellido']);
-        res.status(201).json({
-            ok: true,
-            data: book
-        });
+    // try {
+    const { id } = req.params;
+    const libro = yield models_1.Libro.findById(id);
+    if (libro.img) {
+        const nombreArr = libro.img.split('/');
+        const nombre = nombreArr[nombreArr.length - 1];
+        const [public_id] = nombre.split('.');
+        cloudinary.uploader.destroy('Proyecto books/' + libro.id + '/' + public_id); //asi eliminamos la imagen pero de la carpeta con el nombre del id del libro que esté dentro de la carpeta llamada Proyecto books, si quisieramos eliminar una imagen de la raiz de cloudinary (que está aqui: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home) entonces no hubieramos puesto lo de 'Proyecto books/' + libro.id + '/' , solo hubieramos puesto el puro archivo de la imagen y ya
     }
-    catch (err) {
-        res.status(400).json({
-            ok: false,
-            error: {
-                mensaje: 'No se pudo subir la foto'
-            }
-        });
-    }
+    const { tempFilePath } = req.files.archivo;
+    const { secure_url } = yield cloudinary.uploader.upload(tempFilePath, { folder: 'Proyecto books/' + libro.id });
+    //con la anterior linea se agrega el archivo de la imagen pero no en la raiz del media library del cloudinary (en esta pagina: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home), sino que se agrega en una carpeta de cloudinary con el nombre del id del libro, y esa carpeta estará dentro de una carpeta llamada Proyecto books, y si ambas carpetas no existen o una de ellas no existe entonces se crean, y ahí se guardará la imagen, y si quisieramos guardar sobre la raiz de cloudinary entonces no hubieramos puesto el segundo parametro con el objeto con el atributo folder, solo hubieramos puesto el primer parametro y ya
+    libro.img = secure_url;
+    yield libro.save();
+    const book = yield models_1.Libro.findById(libro.id).populate('autores', ['nombre', 'apellido']);
+    res.status(201).json({
+        ok: true,
+        data: book
+    });
+    // } catch(err) {
+    //     res.status(400).json({
+    //         ok: false,
+    //         error: {
+    //             mensaje: 'No se pudo subir la foto'
+    //         }
+    //     });
+    // }
 });
 exports.subirFoto = subirFoto;
 const mostrarFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -412,7 +412,7 @@ const mostrarFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     if (libro.img) {
         return res.sendFile(libro.img);
     }
-    const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg');
+    const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg'); //OJO que aqui no se va a leer la carpeta assets del proyecto aqui con typescript, sino que se leerá la carpeta assets que esté dentro de la carpeta dist del proyecto ya que ahí es donde se ejecuta el codigo, aqui nosotros solo estamos usando typescript pero ya al ejecutarlo se ejecuta su parte equivalente a javascript que está dentro de la carpeta dist, asi que ahí debemos crear esa carpeta se assets junto con su archivo de no-image.jpg, ya que si no da error
     res.sendFile(pathImage);
 });
 exports.mostrarFoto = mostrarFoto;

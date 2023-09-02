@@ -2,7 +2,7 @@ import Router from 'express';
 import { validarJWT, validarEliminado, validarCampos, validarIdsAurores } from '../middlewares';
 import { check } from 'express-validator';
 import { existeIdLibro } from '../helpers';
-import { actualizarLibro, añadirFavorito, crearLibro, eliminarLibro, mostrarFotoLibro, obtenerFavoritos, obtenerLibro, obtenerLibros, subirFotoLibro } from '../controllers';
+import { actualizarLibro, añadirFavorito, crearLibro, eliminarLibro, obtenerFavoritos, obtenerLibro, obtenerLibros, subirFotoLibro } from '../controllers';
 
 const router = Router();
 
@@ -60,11 +60,6 @@ router.put('/uploads/:id', [
     check('id', 'Debe ser un id de mongo valido y debe ser un libro que exista').isMongoId().custom(existeIdLibro),
     validarCampos
 ], subirFotoLibro);
-
-router.get('/uploads/:id', [
-    check('id', 'Debe ser un id de mongo valido y debe ser un libro que exista').isMongoId().custom(existeIdLibro),
-    validarCampos
-], mostrarFotoLibro);
 
 
 export { router };

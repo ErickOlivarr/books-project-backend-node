@@ -13,6 +13,7 @@ const cloudinary = cloud.v2;
 cloudinary.config(process.env.CLOUDINARY_URL);
 
 
+
 const crearLibro = async (req: Request, res: Response) => {
     const { nombre, isbn, autores } = req.body as LibroObjeto;
     (req.body as LibroObjeto).nombre = capitalizar(nombre);
@@ -380,7 +381,7 @@ const subirFoto = async (req: Request, res: Response) => {
         });
     }
 
-    try {
+    // try {
         const { id } = req.params;
 
         const libro = await Libro.findById(id);
@@ -390,11 +391,12 @@ const subirFoto = async (req: Request, res: Response) => {
             const nombre = nombreArr[nombreArr.length - 1];
             const [ public_id ] = nombre.split('.');
 
-            cloudinary.uploader.destroy(public_id);
+            cloudinary.uploader.destroy('Proyecto books/' + libro.id + '/' + public_id); //asi eliminamos la imagen pero de la carpeta con el nombre del id del libro que esté dentro de la carpeta llamada Proyecto books, si quisieramos eliminar una imagen de la raiz de cloudinary (que está aqui: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home) entonces no hubieramos puesto lo de 'Proyecto books/' + libro.id + '/' , solo hubieramos puesto el puro archivo de la imagen y ya
         }
 
         const { tempFilePath } = req.files.archivo as UploadedFile;
-        const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+        const { secure_url } = await cloudinary.uploader.upload(tempFilePath, { folder: 'Proyecto books/' + libro.id });
+        //con la anterior linea se agrega el archivo de la imagen pero no en la raiz del media library del cloudinary (en esta pagina: https://console.cloudinary.com/console/c-d49bae321a6c65180a64271cbd86d5/media_library/folders/home), sino que se agrega en una carpeta de cloudinary con el nombre del id del libro, y esa carpeta estará dentro de una carpeta llamada Proyecto books, y si ambas carpetas no existen o una de ellas no existe entonces se crean, y ahí se guardará la imagen, y si quisieramos guardar sobre la raiz de cloudinary entonces no hubieramos puesto el segundo parametro con el objeto con el atributo folder, solo hubieramos puesto el primer parametro y ya
 
         libro.img = secure_url;
 
@@ -407,18 +409,18 @@ const subirFoto = async (req: Request, res: Response) => {
             data: book
         });
 
-    } catch(err) {
-        res.status(400).json({
-            ok: false,
-            error: {
-                mensaje: 'No se pudo subir la foto'
-            }
-        });
-    }
+    // } catch(err) {
+    //     res.status(400).json({
+    //         ok: false,
+    //         error: {
+    //             mensaje: 'No se pudo subir la foto'
+    //         }
+    //     });
+    // }
 
 };
 
-const mostrarFoto = async (req: Request, res: Response) => { //con cloudinary
+const mostrarFoto = async (req: Request, res: Response) => { //con cloudinary, NOTA: esta funcion no se usa en los routers (intenté comentarlo pero daba error en el archivo index.ts de esta carpeta de controllers y aunque quitara tambien de ahí esta funcion me seguía marcando error, asi que por eso esta funcion no la comenté, pero pues no se usa en nuestros routers en los endpoints) porque asi se podría obtener la imagen de los libros, esto está bien, pero como la imagen en los libros se guarda como un string con la url de esa imagen que está en cloudinary entonces ya no es necesaría hacer esta funcion para obtener esa imagen, basta con retornar el atributo img del libro en el JSON y ya con eso tendríamos esa url que nos envía directo a ver la imagen, asi que cuando tengamos imagenes subidas en la nube como cloudinary en lugar de tenerlas en el mismo backend con carpetas ya no es necesario tener una funcion especifica o endpoint especifico para ver la foto, ya que en la url para ver esa foto directamente ya se tiene en el campo de la imagen en esa coleccion o tabla
     const { id } = req.params;
 
     const libro = await Libro.findById(id);
@@ -427,7 +429,7 @@ const mostrarFoto = async (req: Request, res: Response) => { //con cloudinary
         return res.sendFile(libro.img);
     }
 
-    const pathImage = path.join( __dirname, '../assets/no-image.jpg' );
+    const pathImage = path.join( __dirname, '../assets/no-image.jpg' ); //OJO que aqui no se va a leer la carpeta assets del proyecto aqui con typescript, sino que se leerá la carpeta assets que esté dentro de la carpeta dist del proyecto ya que ahí es donde se ejecuta el codigo, aqui nosotros solo estamos usando typescript pero ya al ejecutarlo se ejecuta su parte equivalente a javascript que está dentro de la carpeta dist, asi que ahí debemos crear esa carpeta se assets junto con su archivo de no-image.jpg, ya que si no da error
     res.sendFile(pathImage);
 
 };

@@ -84,10 +84,14 @@ router.delete('/:id', [
     middlewares_1.validarCampos
 ], controllers_1.borrarUsuario);
 router.put('/uploads/:id', [
+    middlewares_1.validarJWT,
+    middlewares_1.validarEliminado,
     (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
 ], controllers_1.subirFotoUsuario);
 router.get('/uploads/:id', [
+    middlewares_1.validarJWT,
+    middlewares_1.validarEliminado,
     (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
 ], controllers_1.mostrarFotoUsuario);
