@@ -486,7 +486,7 @@ const obtenerUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function*
     const usuario = yield models_1.Usuario.aggregate([
         {
             $match: {
-                _id: new objectId('64e9a31043ef7c77b2936a9c')
+                _id: new objectId(id)
             }
         },
         {

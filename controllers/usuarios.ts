@@ -530,7 +530,7 @@ const obtenerUsuario = async (req: Request, res: Response): Promise<Response<any
     const usuario = await Usuario.aggregate([
         {
             $match: {
-                _id: new objectId('64e9a31043ef7c77b2936a9c')
+                _id: new objectId(id)
             }
         },
         {
