@@ -11,7 +11,7 @@ const helpers_1 = require("../helpers");
 const controllers_1 = require("../controllers");
 const router = (0, express_1.default)();
 exports.router = router;
-router.post('/', [
+router.post('/email/crear', [
     (0, express_validator_1.check)('nombre', 'El nombre es requerido').not().isEmpty(),
     (0, express_validator_1.check)('nombre', 'El nombre debe ser un texto, minimo 3 letras, maximo 20').isString().matches(/[a-zA-Z]+/)
         .isLength({ min: 3, max: 20 }),
@@ -30,8 +30,17 @@ router.post('/', [
     (0, express_validator_1.check)('detalle.fechaNacimiento', 'Debe ser un numero minimo de 0').isInt({ min: 0 }),
     middlewares_1.validarCampos,
     (0, express_validator_1.check)('detalle.fechaNacimiento').custom(helpers_1.esFechaValidaUsuario),
+    (0, express_validator_1.check)('baseUrl', 'La baseUrl se debe proporcionar y debe ser un string').isString(),
     middlewares_1.validarCampos
-], controllers_1.crearUsuario);
+], controllers_1.crearUsuarioYEnviarEmail);
+router.post('/', [
+    middlewares_1.validarJWT,
+    middlewares_1.validarEliminado
+], controllers_1.validarUsuarioCreado);
+router.post('/email/reenviar', [
+    (0, express_validator_1.check)('baseUrl', 'La baseUrl se debe proporcionar y debe ser un string').isString(),
+    middlewares_1.validarCampos
+], controllers_1.reenviarCorreo);
 router.get('/', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,

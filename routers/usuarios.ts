@@ -2,13 +2,12 @@ import Router from 'express';
 import { check } from 'express-validator';
 import { validarCampos, validarJWT, validarEliminado, esRol } from '../middlewares';
 import { esFechaValidaUsuario, esRolValido, existeEmail, existeIdUsuario, existeNombreYApellidoUsuario, validarIds } from '../helpers';
-import { actualizarUsuario, actualizarUsuarioRol, borrarUsuario, crearUsuario, mostrarFotoUsuario, obtenerUsuario, obtenerUsuarios, subirFotoUsuario } from '../controllers';
+import { actualizarUsuario, actualizarUsuarioRol, borrarUsuario, validarUsuarioCreado, crearUsuarioYEnviarEmail, mostrarFotoUsuario, obtenerUsuario, obtenerUsuarios, subirFotoUsuario, reenviarCorreo } from '../controllers';
 
 
 const router = Router();
 
-
-router.post('/', [
+router.post('/email/crear', [ //este endpoint antes era para crear un usuario antes de añadirle lo del nodemailer
     check('nombre', 'El nombre es requerido').not().isEmpty(),
     check('nombre', 'El nombre debe ser un texto, minimo 3 letras, maximo 20').isString().matches(/[a-zA-Z]+/)
                                                                         .isLength({ min: 3, max: 20 }),
@@ -27,8 +26,19 @@ router.post('/', [
     check('detalle.fechaNacimiento', 'Debe ser un numero minimo de 0').isInt({ min: 0 }),
     validarCampos,
     check('detalle.fechaNacimiento').custom(esFechaValidaUsuario),
+    check('baseUrl', 'La baseUrl se debe proporcionar y debe ser un string').isString(),
     validarCampos
-], crearUsuario);
+], crearUsuarioYEnviarEmail);
+
+router.post('/', [
+    validarJWT,
+    validarEliminado
+], validarUsuarioCreado);
+
+router.post('/email/reenviar', [
+    check('baseUrl', 'La baseUrl se debe proporcionar y debe ser un string').isString(),
+    validarCampos
+], reenviarCorreo);
 
 router.get('/', [
     validarJWT,

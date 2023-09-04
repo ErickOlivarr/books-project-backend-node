@@ -21,7 +21,9 @@ import {
     actualizarUsuario,
     actualizarUsuarioRol,
     borrarUsuario,
-    crearUsuario,
+    validarUsuarioCreado,
+    crearUsuarioYEnviarEmail,
+    reenviarCorreo,
     mostrarFoto as mostrarFotoUsuario,
     obtenerUsuario,
     obtenerUsuarios,
@@ -37,7 +39,7 @@ export {
     borrarUsuario,
     crearAutor,
     crearLibro,
-    crearUsuario,
+    validarUsuarioCreado,
     eliminarAutor,
     eliminarLibro,
     iniciarSesion,
@@ -52,5 +54,7 @@ export {
     obtenerUsuarios,
     renovarToken,
     subirFotoLibro,
-    subirFotoUsuario
+    subirFotoUsuario,
+    crearUsuarioYEnviarEmail,
+    reenviarCorreo
 };

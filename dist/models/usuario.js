@@ -51,7 +51,7 @@ const UsuarioSchema = new mongoose_1.Schema({
         default: true
     },
     //NOTA: Con los siguientes 2 roles si le pasamos un string en el atributo rol del body al crear un usuario, lo guarda como un array de string, solo que el primero tiene la validacion del enum y el segundo no. Y si le mandamos un array en el atributo rol del body pues ese array lo va a guardar, siempre y cuando cumpla con los valores del enum dentro del array. Para declarar un array de string no se puede poner por ejemplo string[] o string[2], eso no se puede hacer, se debe declarar los arrays de esta forma
-    rol: [{ type: String, enum: ['ROLE_ADMIN', 'ROLE_USER'] }],
+    rol: [{ type: String, enum: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_NUEVO'] }],
     // rol: [String]
     detalle: {
         fechaNacimiento: {
@@ -72,6 +72,8 @@ const UsuarioSchema = new mongoose_1.Schema({
         type: String,
         default: null
     }
+}, {
+    timestamps: true
 });
 //la siguiente funcion fue un ejemplo de una forma de hacer validaciones en un campo que se vio arriba
 function validarFecha(valor) {
@@ -140,7 +142,7 @@ UsuarioSchema.pre('updateOne', function (next) {
     });
 });
 UsuarioSchema.method('toJSON', function () {
-    const _a = this.toObject(), { __v, _id, password, estado, img, detalle, detalle: { peso }, detalle: { fechaNacimiento } } = _a, objeto = __rest(_a, ["__v", "_id", "password", "estado", "img", "detalle", "detalle", "detalle"]);
+    const _a = this.toObject(), { __v, _id, createdAt, updatedAt, password, estado, img, detalle, detalle: { peso }, detalle: { fechaNacimiento } } = _a, objeto = __rest(_a, ["__v", "_id", "createdAt", "updatedAt", "password", "estado", "img", "detalle", "detalle", "detalle"]);
     objeto.nombre = `${objeto.nombre} ${objeto.apellido}`;
     delete objeto.apellido; //eliminamos el atributo apellido de la respuesta JSON
     // objeto.peso = detalle.peso.toString() + ' kg'; //esta linea y la siguiente serían por si queremos que el atributo peso y el atributo fechaNacimiento no estén en el objeto anidado del atributo detalle en la respuesta del JSON, sino que estén directamente en el objeto del usuario

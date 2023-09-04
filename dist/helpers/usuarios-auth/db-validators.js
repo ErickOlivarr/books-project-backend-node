@@ -108,6 +108,11 @@ const existeEmailAuth = (email) => __awaiter(void 0, void 0, void 0, function* (
         }
         throw new Error('Email o contraseña incorrecta');
     }
+    else {
+        if (usuarioTrue.rol.includes('ROLE_NUEVO')) {
+            throw new Error('No se ha validado el usuario, checar el correo enviado');
+        }
+    }
     return true;
 });
 exports.existeEmailAuth = existeEmailAuth;

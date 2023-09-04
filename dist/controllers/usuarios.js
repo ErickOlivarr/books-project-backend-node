@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mostrarFoto = exports.subirFoto = exports.actualizarUsuarioRol = exports.borrarUsuario = exports.actualizarUsuario = exports.obtenerUsuario = exports.obtenerUsuarios = exports.crearUsuario = void 0;
+exports.mostrarFoto = exports.subirFoto = exports.actualizarUsuarioRol = exports.borrarUsuario = exports.actualizarUsuario = exports.obtenerUsuario = exports.obtenerUsuarios = exports.reenviarCorreo = exports.validarUsuarioCreado = exports.crearUsuarioYEnviarEmail = void 0;
 const models_1 = require("../models");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const helpers_1 = require("../helpers");
@@ -31,6 +31,8 @@ const mongoose_1 = require("mongoose");
 const objectId = mongoose_1.Types.ObjectId;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const moment_1 = __importDefault(require("moment"));
 // const esPesoValido = (peso: any): boolean => {
 //     if(peso) {
 //         if(Number.isNaN(Number(peso))) {
@@ -46,8 +48,36 @@ const fs_1 = __importDefault(require("fs"));
 //     return sentencia.trim().split(' ').map(palabra => //se quitan los espacios al principio y al final y se capitaliza cada palabra del nombre para asi guardarla en base de datos
 //             palabra[0].toUpperCase() + palabra.slice(1).toLowerCase()).join(' ');
 // };
-const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const _a = req.body, { estado, password, rol, img } = _a, user = __rest(_a, ["estado", "password", "rol", "img"]);
+const enviarCorreo = (token, baseUrl, nombre, apellido, email) => __awaiter(void 0, void 0, void 0, function* () {
+    const cuerpoHtml = `
+        <h3>Bienvenido ${nombre} ${apellido}</h3>
+        <p>
+            Para registrar su usuario por favor haga click en el siguiente enlace:
+            <br>
+            ${baseUrl + 'confirmacion/' + token}
+        </p>
+    `;
+    const config = {
+        host: process.env.HOST_EMAIL_SEND,
+        port: Number(process.env.PORT_EMAIL_SEND),
+        auth: {
+            user: process.env.EMAIL_SEND,
+            pass: process.env.PASS_EMAIL_SEND
+        }
+    };
+    const transport = nodemailer_1.default.createTransport(config);
+    const mensaje = {
+        from: process.env.EMAIL_SEND,
+        to: email,
+        subject: 'Registro Books app',
+        html: cuerpoHtml
+    };
+    const info = yield transport.sendMail(mensaje);
+    return info;
+});
+const crearUsuarioYEnviarEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const _a = req.body, { estado, password, rol, img, baseUrl } = _a, user = __rest(_a, ["estado", "password", "rol", "img", "baseUrl"]);
+    let idU = '';
     try {
         if (!(0, helpers_1.esPesoValido)(user.peso)) { //el atributo peso se validó aqui y no en los routers del usuario en el archivo usuarios.ts de la carpeta routers porque ese atributo hicimos que sea opcional ponerlo en el body, si no se pone entonces se guardará en base de datos (al crear el usuario) con el valor de 0 porque pusimos el default:0 en el atributo peso (del objeto anidado de detalle) del modelo de usuario en el archivo usuario.ts de la carpeta models, asi lo hicimos en este proyecto asi que por eso la validacion se hizo aqui 
             return res.status(400).json({
@@ -60,7 +90,7 @@ const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         user.nombre = (0, helpers_1.capitalizar)(user.nombre);
         user.apellido = (0, helpers_1.capitalizar)(user.apellido);
         user.rol = [
-            'ROLE_USER'
+            'ROLE_NUEVO'
         ];
         const usuario = new models_1.Usuario(user);
         const { id, nombre, apellido, email, password: pass, estado, rol, detalle } = yield usuario.save();
@@ -74,23 +104,121 @@ const crearUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             rol,
             detalle
         };
+        idU = id;
         // console.log('usuario guardado: ', { ...usuarioGuardado }); //OJO que si hacemos { ...usuario } tendremos un objeto no solo con los atributos del modelo de usuario, sino tambien tendremos otros atributos que pone ahi mongoose al hacer el metodo save, find, findOne, findById, etc, esos otros atributos son cosas como $where y cosas asi especiales de mongodb pero esos otros atributos que tendrá la variable usuario aqui por haber aplicado el metodo save no se mostrará en la respuesta JSON, ya que el metodo toJSON de los modelos automaticamente elimina esos elementos sin que nosotros hagamos nada, pero aqui en el codigo esos atributos existirán, por lo tanto si desestructuramos objetos de los modelos (retornados por el metodo save, find, findOne, etc de mongoose) estaríamos desestructurando no solo los atributos que nos interesa del modelo, sino otros atributos especiales que pondrá mongoose, asi que cuidado con eso, y lo mismo aplica si le mandamos todo el objeto a una funcion como la funcion de abajo de generarJWT, si mandamos todo el objeto de usuario estaríamos mandandolo con todo y esos atributos ahi, asi que cuidado con eso
         // const token = await generarJWT(usuarioGuardado as any as UsuarioObjeto); //se puso esto de as unknown as UsuarioObjeto para poder convertirlo a tipo UsuarioObjeto, ya que el usuarioGuardado es de un tipo especial del modelo de usuario porque se obtuvo del save de arriba, por lo tanto si le ponemos solamente as UsuarioObjeto (de la interfaz UsuarioObjeto del archivo usuario.ts de la carpeta interfaces) no se podrá convertir a tipo UsuarioObjeto, asi que cuando tengamos ese tipo de errores que no se puede convertir a un tipo de dato debemos ponerle primero as unknown y ya despues el as del tipo de objeto al que queramos convertir como se ve aqui. Tambien podemos ponerle as any en lugar de as unknown como al final se puso aqui
         // const token = await generarJWT({ ...usuarioGuardado } as UsuarioObjeto); //esto da error porque el usuarioGuardado tiene otros atributos ademas de los atributos del modelo de usuario pero esos atributos no se ven reflejados en el toJSON (cuando lo retornamos como JSON) porque son cosas como $where o cosas asi especiales de mongodb, pero al hacer esto sí se puede obtener esos atributos especiales y eso no coincidirá con la interfaz UsuarioObjeto del archivo usuario.ts de la carpeta interfaces, asi que cuidado con eso
         // const token = await generarJWT(usuarioGuardado); //las anteriores 2 lineas se comentaron por lo que se dijo arriba que se mandaría incluyendo los atributos puestos automaticamente por mongoose, pero aqui estamos mandando un objeto creado por nosotros que es la variable de usuarioGuardado, por eso aqui estamos mandando solo los atributos del modelo de usuario del archivo usuario.ts de la carpeta models que es lo que nos interesa
         const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol); //al final se puso que la funcion generarJWT del archivo generar-jwt.ts de la carpeta helpers que reciba el id, nombre y apellido en lugar de todo el objeto
-        const usuarioReturn = new models_1.Usuario(usuarioGuardado);
-        return res.status(201).json({
+        //envio de email con el token, si el email no se envia entonces eliminar el usuario recien creado con el rol de ROLE_NUEVO
+        const info = yield enviarCorreo(token, baseUrl, nombre, apellido, email);
+        //antes de implementar el nodemailer la anterior linea no estaba, todo lo demas de esta funcion sí estaba
+        console.log(info);
+        // const usuarioReturn = new Usuario(usuarioGuardado); //antes de implementar el nodemailer esta linea no estaba comentada y era esta constante de usuarioReturn la que se enviaba en el atributo data de la respuesta JSON
+        return res.status(200).json({
             ok: true,
-            data: usuarioReturn,
-            token
+            // data: usuarioReturn, //si aqui retornaramos el objeto usuarioGuardado entonces no se respetaría lo de la funcion del toJSON en el modelo de usuario del archivo usuario.ts de la carpeta models, ya que eso solo aplica cuando retornamos como JSON algun objeto instancia de ese modelo como los objetos retornados con el metodo save, find, findOne, etc de mongoose o las instancias de objetos con el new Usuario, por eso si aqui ponemos la variable usuario sí se respetará ese metodo toJSON, y tambien con esta variable de usuarioReturn sí se respetará esa funcion de toJSON porque arriba pusimos que sea instancia del modelo de usuario al igualarlo con el new Usuario, asi que aqui pudimos haber puesto la variable usuario o esta variable de usuarioReturn, con ambas se hubiera retornado lo mismo
+            data: {
+                mensaje: `Correo enviado a ${email}, favor de verificarlo, no olvidarse de checar la parte de correos no deseados`
+            }
         });
     }
     catch (err) {
-        console.log('Hubo un error: ', err);
+        // console.log('Hubo un error: ', err);
+        if (objectId.isValid(idU)) { //si se guardó el usuario pero no se pudo enviar el correo que ese usuario se elimine
+            yield models_1.Usuario.findByIdAndDelete(idU);
+        }
+        res.status(500).json({
+            ok: false,
+            error: 'No se pudo guardar el usuario ni enviarse el email, comuniquese con el administrador'
+        });
     }
 });
-exports.crearUsuario = crearUsuario;
+exports.crearUsuarioYEnviarEmail = crearUsuarioYEnviarEmail;
+const validarUsuarioCreado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.payload;
+    const usuarios = yield models_1.Usuario.find({
+        rol: {
+            $in: ['ROLE_NUEVO']
+        },
+        _id: {
+            $ne: id
+        }
+    }).lean(); //este metodo de lean() se explica mas abajo en este archivo
+    const usuariosIds = usuarios.filter(u => {
+        return (0, moment_1.default)().diff((0, moment_1.default)(u.createdAt), 'days') >= 7; //los usuarios que no han activado su cuenta en 7 o mas dias serán eliminados, para hacer limpieza en la base de datos, esto cada vez que se cree un nuevo usuario ya validado en esta funcion
+    }).map(u => u._id);
+    yield Promise.all([
+        models_1.Usuario.updateOne({
+            _id: id
+        }, {
+            $pull: {
+                rol: 'ROLE_NUEVO'
+            }
+        }),
+        models_1.Usuario.updateOne({
+            _id: id
+        }, {
+            $addToSet: {
+                rol: 'ROLE_USER'
+            }
+        }),
+        models_1.Usuario.deleteMany({
+            _id: {
+                $in: [...usuariosIds]
+            }
+        })
+    ]);
+    const usuario = yield models_1.Usuario.findById(id);
+    const token = yield (0, helpers_1.generarJWT)(usuario.id, usuario.nombre, usuario.apellido, usuario.rol);
+    res.status(201).json({
+        ok: true,
+        data: usuario,
+        token
+    });
+});
+exports.validarUsuarioCreado = validarUsuarioCreado;
+const reenviarCorreo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { baseUrl } = req.body;
+    try {
+        const tokenAntiguo = req.header('x-token'); //aqui el token proporcionado en el header debe ya estar caducado para que entonces se envie otro correo con otro token
+        if (!tokenAntiguo) {
+            return res.status(400).json({
+                ok: false,
+                error: 'No se encuentra el token en el header'
+            });
+        }
+        const { id } = JSON.parse(atob(tokenAntiguo.split('.')[1])); //con esto se obtiene el payload del token, no se hizo de la forma en que está en el archivo validar-jwt.ts de la carpeta middlewares porque ahí solo se obtiene el payload si el token no ha expirado, pero en este caso aqui a esta funcion se manda el token ya expirado para generar uno nuevo y asi reenviar el correo con ese nuevo token que ya esté correcto, pero de esta forma no importa si ya está expirado o no, de todos modos se va a pasar este token
+        const usuario = yield models_1.Usuario.findOne({
+            _id: id,
+            rol: {
+                $in: ['ROLE_NUEVO']
+            }
+        });
+        if (usuario) {
+            const { id, nombre, apellido, rol, email } = usuario;
+            const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol);
+            const info = yield enviarCorreo(token, baseUrl, nombre, apellido, email);
+            console.log(info);
+            return res.json({
+                ok: true,
+                data: {
+                    mensaje: `Correo reenviado a ${email}, favor de verificarlo, no olvidarse de checar la parte de correos no deseados`
+                }
+            });
+        }
+        else {
+            throw new Error(''); //para que se ejecute el catch de abajo
+        }
+    }
+    catch (err) {
+        res.status(400).json({
+            ok: false,
+            error: 'No se pudo reenviar el correo. Intente registrarlo de nuevo'
+        });
+    }
+});
+exports.reenviarCorreo = reenviarCorreo;
 const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { role = 'user', buscar, edad: age, ordenar: order = 'nombre', asc = 1, desde = 0, limite = 10 } = req.query; //aqui obtenemos los query params para buscar por rol con el parametro de role, buscar por nombre, apellido o email con el parametro buscar, buscar por edad con el parametro edad (que la edad sea igual o mayor a la que se ponga en ese parametro), ordenar por alguno de los atributos incluyendo el nombre, apellido, edad, email y peso con el parametro ordenar, decir si se ordenará ascendentemente (con un valor mayor a 0 o que no sea numero como letras) o descendentemente (con un valor igual o menor a 0) con el parametro asc, que se pagine con los parametros desde y limite para decir desde qué documento se empiece a hacer el filtro y todo con el parametro desde, y cuántos elementos mostrar (minimo debe ser 1 documento o ninguno en caso que no se encuentre ninguno por los filtros) con el parametro limite, asi funciona, y todos estos parametros son opcionales porque son query params, si no se pone ninguno entonces se mostrarán todos los documentos con limite de 10 documentos, osea los primeros 10 documentos se mostrarán por default asi como se puso aqui, y abajo se hacen unas pequeñas validaciones con estos parametros para que no dé error
     const ordenar = order.length == 0 ? 'nombre' : order;
@@ -106,7 +234,7 @@ const obtenerUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function
                     $nor: [
                         {
                             rol: {
-                                $in: ['ROLE_ADMIN']
+                                $in: ['ROLE_ADMIN', 'ROLE_NUEVO']
                             }
                         }
                     ]

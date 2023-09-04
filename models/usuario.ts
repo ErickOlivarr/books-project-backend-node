@@ -28,7 +28,7 @@ const UsuarioSchema = new Schema({
         default: true
     },
     //NOTA: Con los siguientes 2 roles si le pasamos un string en el atributo rol del body al crear un usuario, lo guarda como un array de string, solo que el primero tiene la validacion del enum y el segundo no. Y si le mandamos un array en el atributo rol del body pues ese array lo va a guardar, siempre y cuando cumpla con los valores del enum dentro del array. Para declarar un array de string no se puede poner por ejemplo string[] o string[2], eso no se puede hacer, se debe declarar los arrays de esta forma
-    rol: [ { type: String, enum: ['ROLE_ADMIN', 'ROLE_USER'] } ], //asi tenemos que un atributo será un array de strings, esto debido a que en este caso el usuario podrá tener mas de 1 rol
+    rol: [ { type: String, enum: ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_NUEVO'] } ], //asi tenemos que un atributo será un array de strings, esto debido a que en este caso el usuario podrá tener mas de 1 rol
     // rol: [String]
     detalle: { //NOTA: Aqui se puso un objeto anidado de detalle, esto se puede hacer en mongodb porque pues los documentos son practicamente objetos literales o JSON, y asi podemos hacer una alternativa a la relacion de one to one por ejemplo, aunque si en este objeto de detalle tuvieramos muchos atributos pudieramos crear una coleccion aparte (modelo aparte) del detalle de los usuarios y ya aqui ponerlo como un id como se vio en el curso de node js con las relaciones entre colecciones, tambien podríamos hacer eso, pero como en este caso son pocos atributos pues lo hicimos de esta forma creando un objeto anidado en los documentos del usuario llamado detalle. Este tipo de relacion que pusimos aqui con un objeto anidado se llama Modelo de datos integrados (Desnormalizacion) y es menos recomendado pero funciona bien cuando hay pocos atributos en el objeto anidado como se dijo anteriormente, y si ponemos aqui el id de otro esquema o coleccion como referencia como lo visto en el curso de node js o en mysql por ejemplo eso se llama Modelo de datos referenciados (Normalizacion), y esta ultima es la forma mas recomendada, aunque en este caso se hizo de esta manera con la Desnormalizacion porque pues teníamos pocos atributos en el detalle del usuario
         fechaNacimiento: {
@@ -50,6 +50,8 @@ const UsuarioSchema = new Schema({
         default: null
     }
 
+}, {
+    timestamps: true
 });
 
 
@@ -134,7 +136,7 @@ UsuarioSchema.pre('updateOne', async function(next) { //esto se explicó en la f
 });
 
 UsuarioSchema.method('toJSON', function() {
-    const { __v, _id, password, estado, img, detalle, detalle:{peso}, detalle:{fechaNacimiento}, ...objeto } = this.toObject();
+    const { __v, _id, createdAt, updatedAt, password, estado, img, detalle, detalle:{peso}, detalle:{fechaNacimiento}, ...objeto } = this.toObject();
     
     objeto.nombre = `${objeto.nombre} ${objeto.apellido}`;
     delete objeto.apellido; //eliminamos el atributo apellido de la respuesta JSON

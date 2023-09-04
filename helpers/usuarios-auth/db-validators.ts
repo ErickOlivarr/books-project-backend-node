@@ -106,6 +106,11 @@ const existeEmailAuth = async (email: ObjectId) => {
         }
         throw new Error('Email o contraseña incorrecta');
     }
+    else {
+        if(usuarioTrue.rol.includes('ROLE_NUEVO')) {
+            throw new Error('No se ha validado el usuario, checar el correo enviado');
+        }
+    }
 
     return true;
 };
