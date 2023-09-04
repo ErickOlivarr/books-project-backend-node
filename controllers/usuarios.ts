@@ -7,7 +7,7 @@ import { Types, ObjectId } from 'mongoose';
 const objectId = Types.ObjectId;
 import path from 'path';
 import fs from 'fs';
-import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer'; //npm i nodemailer para instalar este paquete para enviar correos con nodejs
 import moment from 'moment';
 
 // const esPesoValido = (peso: any): boolean => {
@@ -41,24 +41,24 @@ const enviarCorreo = async (token: string, baseUrl: string, nombre: string, apel
     `;
 
     const config = {
-        host: process.env.HOST_EMAIL_SEND,
-        port: Number(process.env.PORT_EMAIL_SEND),
+        host: process.env.HOST_EMAIL_SEND, //el host del correo desde el cual se va a enviar el correo, para un correo de gmail el host es: smtp.gmail.com
+        port: Number(process.env.PORT_EMAIL_SEND), //el puerto del dominio del correo que va a enviar el correo, no el que va a recibir el correo sino el que va a enviarlo, osea del correo del atributo user del objeto de auth de abajo, y en el caso de un correo de gmail el puerto es 465
         auth: {
-            user: process.env.EMAIL_SEND,
-            pass: process.env.PASS_EMAIL_SEND
+            user: process.env.EMAIL_SEND, //el correo desde el cual se va a mandar el correo
+            pass: process.env.PASS_EMAIL_SEND //la contraseña pero no del correo desde el cual se va a mandar, sino la contraseña de aplicacion que creamos desde nuestro correo de la anterior linea, para eso ir aqui en nuestra cuenta de google de gmail (iniciar sesion primero): https://myaccount.google.com/security?hl=es , y ver la parte que dice "Verificacion en dos pasos", y activarla, y ya cuando esté activa buscar en el buscador de ahí de la pagina que puse anteriormente: "Contraseñas de aplicaciones", y estando en esa parte de contraseñas de aplicaciones, donde dice "Seleccionar aplicacion" poner la opcion de "Otra", darle un nombre y ponerle en generar y se nos mostrará una contraseña generada automaticamente y esa contraseña es la que pondremos aqui, esto se hace para todo tipo de aplicaciones donde queramos mandar correos, incluido spring boot, node js como en este caso, etc
         }
     };
 
-    const transport = nodemailer.createTransport(config);
+    const transport = nodemailer.createTransport(config); //siempre se debe hacer esto para enviar correos con nodemailer, para darle su configuracion
 
     const mensaje = {
-        from: process.env.EMAIL_SEND,
-        to: email,
-        subject: 'Registro Books app',
-        html: cuerpoHtml
+        from: process.env.EMAIL_SEND, //el correo desde el cual vamos a mandar, debe ser el mismo que el correo puesto en el atributo user del objeto auth de arriba
+        to: email, //el email al cual queremos enviar, el que recibirá el correo que mandemos
+        subject: 'Registro Books app', //el titulo del email
+        html: cuerpoHtml //aqui podemos ponerle text o html como nombre de atributo, si le ponemos text pues solo podremos ponerle un string de un texto normal para que en el cuerpo del correo que enviemos solo se muestre un texto normal y ya, pero si le ponemos html como aqui entonces recibirá un string que contenga un codigo de html como se ve arriba en la constante llamada cuerpoHtml, la cual la pusimos aqui, esto para que el cuerpo del correo que enviemos tenga la estructura del html que pongamos, pudiendo ponerle imagenes al correo con la etiqueta img del html por ejemplo
     };
 
-    const info = await transport.sendMail(mensaje);
+    const info = await transport.sendMail(mensaje); //esto es para ahora sí enviar el correo usando nodemailer con la configuracion que le dimos arriba, y esto retorna una promesa, por eso aqui pusimos el await
 
     return info;
 

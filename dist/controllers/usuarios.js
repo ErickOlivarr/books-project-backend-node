@@ -31,7 +31,7 @@ const mongoose_1 = require("mongoose");
 const objectId = mongoose_1.Types.ObjectId;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const nodemailer_1 = __importDefault(require("nodemailer"));
+const nodemailer_1 = __importDefault(require("nodemailer")); //npm i nodemailer para instalar este paquete para enviar correos con nodejs
 const moment_1 = __importDefault(require("moment"));
 // const esPesoValido = (peso: any): boolean => {
 //     if(peso) {
@@ -62,17 +62,17 @@ const enviarCorreo = (token, baseUrl, nombre, apellido, email) => __awaiter(void
         port: Number(process.env.PORT_EMAIL_SEND),
         auth: {
             user: process.env.EMAIL_SEND,
-            pass: process.env.PASS_EMAIL_SEND
+            pass: process.env.PASS_EMAIL_SEND //la contraseña pero no del correo desde el cual se va a mandar, sino la contraseña de aplicacion que creamos desde nuestro correo de la anterior linea, para eso ir aqui en nuestra cuenta de google de gmail (iniciar sesion primero): https://myaccount.google.com/security?hl=es , y ver la parte que dice "Verificacion en dos pasos", y activarla, y ya cuando esté activa buscar en el buscador de ahí de la pagina que puse anteriormente: "Contraseñas de aplicaciones", y estando en esa parte de contraseñas de aplicaciones, donde dice "Seleccionar aplicacion" poner la opcion de "Otra", darle un nombre y ponerle en generar y se nos mostrará una contraseña generada automaticamente y esa contraseña es la que pondremos aqui, esto se hace para todo tipo de aplicaciones donde queramos mandar correos, incluido spring boot, node js como en este caso, etc
         }
     };
-    const transport = nodemailer_1.default.createTransport(config);
+    const transport = nodemailer_1.default.createTransport(config); //siempre se debe hacer esto para enviar correos con nodemailer, para darle su configuracion
     const mensaje = {
         from: process.env.EMAIL_SEND,
         to: email,
         subject: 'Registro Books app',
-        html: cuerpoHtml
+        html: cuerpoHtml //aqui podemos ponerle text o html como nombre de atributo, si le ponemos text pues solo podremos ponerle un string de un texto normal para que en el cuerpo del correo que enviemos solo se muestre un texto normal y ya, pero si le ponemos html como aqui entonces recibirá un string que contenga un codigo de html como se ve arriba en la constante llamada cuerpoHtml, la cual la pusimos aqui, esto para que el cuerpo del correo que enviemos tenga la estructura del html que pongamos, pudiendo ponerle imagenes al correo con la etiqueta img del html por ejemplo
     };
-    const info = yield transport.sendMail(mensaje);
+    const info = yield transport.sendMail(mensaje); //esto es para ahora sí enviar el correo usando nodemailer con la configuracion que le dimos arriba, y esto retorna una promesa, por eso aqui pusimos el await
     return info;
 });
 const crearUsuarioYEnviarEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
