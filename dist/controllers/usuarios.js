@@ -32,7 +32,6 @@ const objectId = mongoose_1.Types.ObjectId;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const nodemailer_1 = __importDefault(require("nodemailer")); //npm i nodemailer para instalar este paquete para enviar correos con nodejs
-const moment_1 = __importDefault(require("moment"));
 // const esPesoValido = (peso: any): boolean => {
 //     if(peso) {
 //         if(Number.isNaN(Number(peso))) {
@@ -52,9 +51,8 @@ const enviarCorreo = (token, baseUrl, nombre, apellido, email) => __awaiter(void
     const cuerpoHtml = `
         <h3>Bienvenido ${nombre} ${apellido}</h3>
         <p>
-            Para registrar su usuario por favor haga click en el siguiente enlace:
-            <br>
-            ${baseUrl + 'confirmacion/' + token}
+            Para registrar su usuario por favor haga click
+            <a href="${baseUrl + 'confirmacion/' + token}" style="background-color:#00aae4; padding:7px; text-align:center; border-radius:7px; text-decoration:none; color:white;">AQUI</a>
         </p>
     `;
     const config = {
@@ -92,6 +90,8 @@ const crearUsuarioYEnviarEmail = (req, res) => __awaiter(void 0, void 0, void 0,
         user.rol = [
             'ROLE_NUEVO'
         ];
+        user.img = null;
+        // user.email = user.email.trim();
         const usuario = new models_1.Usuario(user);
         const { id, nombre, apellido, email, password: pass, estado, rol, detalle } = yield usuario.save();
         const usuarioGuardado = {
@@ -113,7 +113,7 @@ const crearUsuarioYEnviarEmail = (req, res) => __awaiter(void 0, void 0, void 0,
         //envio de email con el token, si el email no se envia entonces eliminar el usuario recien creado con el rol de ROLE_NUEVO
         const info = yield enviarCorreo(token, baseUrl, nombre, apellido, email);
         //antes de implementar el nodemailer la anterior linea no estaba, todo lo demas de esta funcion sí estaba
-        console.log(info);
+        // console.log(info);
         // const usuarioReturn = new Usuario(usuarioGuardado); //antes de implementar el nodemailer esta linea no estaba comentada y era esta constante de usuarioReturn la que se enviaba en el atributo data de la respuesta JSON
         return res.status(200).json({
             ok: true,
@@ -137,17 +137,25 @@ const crearUsuarioYEnviarEmail = (req, res) => __awaiter(void 0, void 0, void 0,
 exports.crearUsuarioYEnviarEmail = crearUsuarioYEnviarEmail;
 const validarUsuarioCreado = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.payload;
-    const usuarios = yield models_1.Usuario.find({
-        rol: {
-            $in: ['ROLE_NUEVO']
-        },
-        _id: {
-            $ne: id
-        }
-    }).lean(); //este metodo de lean() se explica mas abajo en este archivo
-    const usuariosIds = usuarios.filter(u => {
-        return (0, moment_1.default)().diff((0, moment_1.default)(u.createdAt), 'days') >= 7; //los usuarios que no han activado su cuenta en 7 o mas dias serán eliminados, para hacer limpieza en la base de datos, esto cada vez que se cree un nuevo usuario ya validado en esta funcion
-    }).map(u => u._id);
+    const usuario = yield models_1.Usuario.findById(id);
+    if (!usuario.rol.includes('ROLE_NUEVO')) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Este usuario ya está registrado'
+        });
+    }
+    // const usuarios = await Usuario.find({
+    //     rol: {
+    //         $in: [ 'ROLE_NUEVO' ]
+    //     },
+    //     _id: {
+    //         $ne: id
+    //     }
+    // }).lean(); //este metodo de lean() se explica mas abajo en este archivo
+    // const usuariosIds = usuarios.filter(u => {
+    //     return moment().diff(moment(u.createdAt), 'days') >= 7; //los usuarios que no han activado su cuenta en 7 o mas dias serán eliminados, para hacer limpieza en la base de datos, esto cada vez que se cree un nuevo usuario ya validado en esta funcion
+    // }).map(u => u._id);
+    //lo anterior sería para el primer deleteMany de abajo que se comentó, pero como eso se comentó pues por eso lo de arriba tambien se comentó, porque al final hicimos lo mismo usando solo mongodb, checarlo en el segundo deleteMany de abajo
     yield Promise.all([
         models_1.Usuario.updateOne({
             _id: id
@@ -163,17 +171,34 @@ const validarUsuarioCreado = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 rol: 'ROLE_USER'
             }
         }),
+        // Usuario.deleteMany({
+        //     _id: {
+        //         $in: [ ...usuariosIds ]
+        //     }
+        // })
         models_1.Usuario.deleteMany({
+            rol: {
+                $in: ['ROLE_NUEVO']
+            },
             _id: {
-                $in: [...usuariosIds]
+                $ne: id
+            },
+            $expr: {
+                $gte: [{
+                        $dateDiff: {
+                            startDate: '$createdAt',
+                            endDate: new Date(),
+                            unit: 'day'
+                        }
+                    }, 7]
             }
         })
     ]);
-    const usuario = yield models_1.Usuario.findById(id);
-    const token = yield (0, helpers_1.generarJWT)(usuario.id, usuario.nombre, usuario.apellido, usuario.rol);
+    const user = yield models_1.Usuario.findById(id);
+    const token = yield (0, helpers_1.generarJWT)(user.id, user.nombre, user.apellido, user.rol);
     res.status(201).json({
         ok: true,
-        data: usuario,
+        data: user,
         token
     });
 });
@@ -199,7 +224,7 @@ const reenviarCorreo = (req, res) => __awaiter(void 0, void 0, void 0, function*
             const { id, nombre, apellido, rol, email } = usuario;
             const token = yield (0, helpers_1.generarJWT)(id, nombre, apellido, rol);
             const info = yield enviarCorreo(token, baseUrl, nombre, apellido, email);
-            console.log(info);
+            // console.log(info);
             return res.json({
                 ok: true,
                 data: {
@@ -214,7 +239,7 @@ const reenviarCorreo = (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (err) {
         res.status(400).json({
             ok: false,
-            error: 'No se pudo reenviar el correo. Intente registrarlo de nuevo'
+            error: 'No se pudo reenviar el correo. Es probable que el usuario ya haya sido registrado, caso contrario favor de registrarlo de nuevo'
         });
     }
 });
@@ -732,10 +757,13 @@ const subirFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const nombreImg = yield (0, helpers_1.subirArchivo)(req.files, undefined, user.id);
         user.img = nombreImg;
         yield user.save();
-        const usuario = yield models_1.Usuario.findById(user.id);
+        // const usuario = await Usuario.findById(user.id);
         res.status(201).json({
             ok: true,
-            data: usuario
+            // data: usuario
+            data: {
+                mensaje: 'Foto subida correctamente'
+            }
         });
     }
     catch (err) {

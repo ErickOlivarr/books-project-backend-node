@@ -39,6 +39,9 @@ const existeNombreYApellido = async (nombre: string, {req}) => {
     });
 
     if(usuario) {
+        if(usuario.rol.includes('ROLE_NUEVO')) {
+            throw new Error(`Favor de validar el usuario con este nombre y apellido en el correo enviado a ${usuario.email}`);
+        }
         throw new Error('Existe usuario con ese nombre y apellido');
     }
 };
@@ -50,6 +53,9 @@ const existeEmail = async (email: string) => {
     });
 
     if(usuario) {
+        if(usuario.rol.includes('ROLE_NUEVO')) {
+            throw new Error(`Usuario no validado. Favor de validarlo en el correo enviado a ${usuario.email}`);
+        }
         throw new Error('Existe usuario con ese email');
     }
 };
@@ -120,6 +126,9 @@ const existeId = async (id: ObjectId) => {
     if(!usuario || !usuario.estado) {
         throw new Error('No existe un usuario con este id o fue eliminado');
     }
+    if(usuario.rol.includes('ROLE_NUEVO')) {
+        throw new Error(`El usuario no se ha validado`);
+    }
 
     return true;
 };
@@ -135,14 +144,14 @@ const validarIds = async (idArray: string[]): Promise<Error | boolean> => {
         $nor: [
             {
                 rol: {
-                    $in: [ 'ROLE_ADMIN' ]
+                    $in: [ 'ROLE_ADMIN', 'ROLE_NUEVO' ]
                 }
             }
         ] 
     }));
     const resultArray = await Promise.all([...array]);
     if( resultArray.some(result => result === null || result === undefined) ) {
-        throw new Error('Deben existir todos los ids en el array y no deben ser administradores');
+        throw new Error('Deben existir todos los ids en el array, deben ser usuarios verificados y no deben ser administradores');
     }
 
     return true;

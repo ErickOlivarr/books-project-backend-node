@@ -12,12 +12,12 @@ const LibroSchema = new Schema({
         required: [ true, 'El codigo isbn es requerido' ],
         // unique: true
     },
-    usuario: {
+    usuario: { //asi se pone una relacion de uno a muchos siendo este atributo el uno, ya que un libro puede tener un solo usuarios, y un usuario puede tener muchos libros, aunque en el modelo de usuario del archivo usuario.ts de la carpeta models no se le puso lo de sus libros, por lo tanto esta relacion es unidireccional, y si en el modelo del usuario hubieramos puesto sus libros entonces sería una relacion bidireccional, y en el modelo del usuario hubieramos puesto ese atributo de libros como un array asi como el atributo autores de abajo, pero si solo tiene uno y no muchos entonces el atributo se pone como un objeto como se puso aqui
         type: Schema.Types.ObjectId,
         ref: 'Usuario',
         required: true
     },
-    autores: [
+    autores: [ //asi se pone una relacion de muchos a muchos ya que un libro puede tener 1 o mas autores, y un autor puede tener muchos libros, y como vemos en mongodb no hace falta crear otra coleccion aparte para la relacion de muchos a muchos como pasa en mysql, y como un libro puede tener muchos autores por eso aqui se puso como un array como se explicó arriba, y esta relacion de libros y autores se puso de forma bidireccional porque en el modelo del autor en el archivo autor.ts de esta carpeta de models se puso tambien su atributo de libros para decir todos los libros que tiene el autor, igual como un array, asi se hace la relacion de muchos a muchos de forma bidireccional, y si fuera unidireccional pues aqui solo pondríamos los autores y en el modelo del autor no pondríamos sus libros o viceversa
         { type: Schema.Types.ObjectId, ref: 'Autor', required: [ true, 'Debes asignarle autores al libro' ] }
     ],
     favorito: {
@@ -53,7 +53,7 @@ LibroSchema.method('toJSON', function() {
     const { _id, __v, createdAt, updatedAt, ...objeto } = this.toObject();
     objeto.id = _id;
     if(createdAt) {
-        objeto.publicado = moment(createdAt).add(6, 'hours').format('DD/MM/YYYY');
+        objeto.publicado = moment(createdAt).format('DD/MM/YYYY');
     }
 
     if(objeto.usuario?.nombre) { //si se hizo el populate con el atributo de relacion usuario

@@ -20,7 +20,7 @@ router.post('/email/crear', [
         .isLength({ min: 3, max: 20 }),
     middlewares_1.validarCampos,
     (0, express_validator_1.check)('nombre').custom(helpers_1.existeNombreYApellidoUsuario),
-    (0, express_validator_1.check)('email', 'No es un correo valido').isString().matches(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/),
+    (0, express_validator_1.check)('email', 'No es un correo valido').trim().isString().matches(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/),
     //con lo de la anterior linea, tambien está el isEmail() para checar si es un email como se ha visto en el curso de node js, pero tambien para validar un email o otras cosas se puede checar con una expresion regular usando el matches del express-validator como se ve aqui, con esta expresion regular se checa tambien si es un correo valido, para eso sirve el matches del express-validator, para checar si coincide con una expresion regular
     (0, express_validator_1.check)('email').custom(helpers_1.existeEmail),
     (0, express_validator_1.check)('password', 'La contraseña debe tener minimo 5 caracteres, sin espacios en blanco').isString()

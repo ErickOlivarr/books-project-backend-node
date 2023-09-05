@@ -11,8 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const validarEliminado = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { estado } = yield models_1.Usuario.findById(req.payload.id);
-    if (!estado) {
+    const user = yield models_1.Usuario.findById(req.payload.id);
+    if (!(user === null || user === void 0 ? void 0 : user.estado)) {
         return res.status(401).json({
             ok: false,
             error: 'El usuario fue eliminado',

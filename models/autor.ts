@@ -14,12 +14,12 @@ const AutorSchema = new Schema({
         type: Date,
         default: null
     },
-    usuario: {
+    usuario: { //ver el archivo libro.ts de esta carpeta de models para ver la explicacion de estas relaciones de many to many y unidireccional y bidireccional con node js y mongodb
         type: Schema.Types.ObjectId,
         ref: 'Usuario',
         required: true
     },
-    libros: [
+    libros: [ //ver el archivo libro.ts de esta carpeta de models para ver la explicacion de estas relaciones de many to many y unidireccional y bidireccional con node js y mongodb
         { type: Schema.Types.ObjectId, ref: 'Libro' }
     ]
 });

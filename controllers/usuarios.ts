@@ -34,9 +34,8 @@ const enviarCorreo = async (token: string, baseUrl: string, nombre: string, apel
     const cuerpoHtml = `
         <h3>Bienvenido ${nombre} ${apellido}</h3>
         <p>
-            Para registrar su usuario por favor haga click en el siguiente enlace:
-            <br>
-            ${baseUrl + 'confirmacion/' + token}
+            Para registrar su usuario por favor haga click
+            <a href="${baseUrl + 'confirmacion/' + token}" style="background-color:#00aae4; padding:7px; text-align:center; border-radius:7px; text-decoration:none; color:white;">AQUI</a>
         </p>
     `;
 
@@ -83,10 +82,11 @@ const crearUsuarioYEnviarEmail = async (req: Request, res: Response) => {
 
         user.nombre = capitalizar(user.nombre);
         user.apellido = capitalizar(user.apellido);
-
         user.rol = [
             'ROLE_NUEVO'
         ];
+        user.img = null;
+        // user.email = user.email.trim();
 
         const usuario = new Usuario(user);
 
@@ -116,7 +116,7 @@ const crearUsuarioYEnviarEmail = async (req: Request, res: Response) => {
         //envio de email con el token, si el email no se envia entonces eliminar el usuario recien creado con el rol de ROLE_NUEVO
         const info = await enviarCorreo(token as string, baseUrl, nombre, apellido, email); 
         //antes de implementar el nodemailer la anterior linea no estaba, todo lo demas de esta funcion sí estaba
-        console.log(info);
+        // console.log(info);
 
 
 
@@ -148,17 +148,26 @@ const validarUsuarioCreado = async (req: Request, res: Response)/*: Promise<Resp
 
     const { id } = (req as any as tokenUsuario).payload;
 
-    const usuarios = await Usuario.find({
-        rol: {
-            $in: [ 'ROLE_NUEVO' ]
-        },
-        _id: {
-            $ne: id
-        }
-    }).lean(); //este metodo de lean() se explica mas abajo en este archivo
-    const usuariosIds = usuarios.filter(u => {
-        return moment().diff(moment(u.createdAt), 'days') >= 7; //los usuarios que no han activado su cuenta en 7 o mas dias serán eliminados, para hacer limpieza en la base de datos, esto cada vez que se cree un nuevo usuario ya validado en esta funcion
-    }).map(u => u._id);
+    const usuario = await Usuario.findById(id);
+    if(!usuario.rol.includes('ROLE_NUEVO')) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Este usuario ya está registrado'
+        });
+    }
+
+    // const usuarios = await Usuario.find({
+    //     rol: {
+    //         $in: [ 'ROLE_NUEVO' ]
+    //     },
+    //     _id: {
+    //         $ne: id
+    //     }
+    // }).lean(); //este metodo de lean() se explica mas abajo en este archivo
+    // const usuariosIds = usuarios.filter(u => {
+    //     return moment().diff(moment(u.createdAt), 'days') >= 7; //los usuarios que no han activado su cuenta en 7 o mas dias serán eliminados, para hacer limpieza en la base de datos, esto cada vez que se cree un nuevo usuario ya validado en esta funcion
+    // }).map(u => u._id);
+    //lo anterior sería para el primer deleteMany de abajo que se comentó, pero como eso se comentó pues por eso lo de arriba tambien se comentó, porque al final hicimos lo mismo usando solo mongodb, checarlo en el segundo deleteMany de abajo
 
     await Promise.all([ 
         Usuario.updateOne({
@@ -175,21 +184,37 @@ const validarUsuarioCreado = async (req: Request, res: Response)/*: Promise<Resp
                 rol: 'ROLE_USER'
             }
         }),
+        // Usuario.deleteMany({
+        //     _id: {
+        //         $in: [ ...usuariosIds ]
+        //     }
+        // })
         Usuario.deleteMany({
+            rol: {
+                $in: [ 'ROLE_NUEVO' ]
+            },
             _id: {
-                $in: [ ...usuariosIds ]
+                $ne: id
+            },
+            $expr: { //esto de $expr se explica mas abajo en este archivo
+                $gte: [ { //asi se hace un $gte usando el $expr, comparando asi 2 valores, calculandolos, ver esto mas abajo en este archivo
+                   $dateDiff: { //asi se checa la diferencia entre 2 fechas de acuerdo a su atributo unit que se le ponga, en este caso vemos que abajo al unit se le puso 'day', por lo tanto esto dirá la diferencia en dias de esas 2 fechas, si quisieramos la diferencia en meses ahí pondríamos 'month', en años pondríamos 'year', y asi, y con su atributo startDate pues es el inicio de la fecha, y el endDate es el final de la fecha, y aqui le estamos poniendo que el inicio de la fecha que sea el atributo createdAt del usuario, y que el final de la fecha que sea la fecha actual con el new Date(), y entonces con este $gte estamos diciendo que el atributo createdAt de los usuarios al ejecutarse esto que sea mayor o igual a 7 dias de diferencia con la fecha actual, esto porque abajo como segundo parametro del $gte pusimos 7 
+                    startDate: '$createdAt',
+                    endDate: new Date(),
+                    unit: 'day'
+                   } 
+                }, 7 ]
             }
         })
     ]);
 
+    const user = await Usuario.findById(id);
 
-    const usuario = await Usuario.findById(id);
-
-    const token = await generarJWT(usuario.id, usuario.nombre, usuario.apellido, usuario.rol);
+    const token = await generarJWT(user.id, user.nombre, user.apellido, user.rol);
 
     res.status(201).json({
         ok: true,
-        data: usuario,
+        data: user,
         token
     });
     
@@ -225,7 +250,7 @@ const reenviarCorreo = async (req: Request, res: Response) => {
             const token = await generarJWT(id, nombre, apellido, rol);
 
             const info = await enviarCorreo(token as string, baseUrl, nombre, apellido, email);
-            console.log(info);
+            // console.log(info);
 
             return res.json({
                 ok: true,
@@ -241,7 +266,7 @@ const reenviarCorreo = async (req: Request, res: Response) => {
     } catch(err) {
         res.status(400).json({
             ok: false,
-            error: 'No se pudo reenviar el correo. Intente registrarlo de nuevo'
+            error: 'No se pudo reenviar el correo. Es probable que el usuario ya haya sido registrado, caso contrario favor de registrarlo de nuevo'
         });
     }
 };
@@ -804,11 +829,14 @@ const subirFoto = async (req: Request, res: Response) => {
 
         await user.save();
 
-        const usuario = await Usuario.findById(user.id);
+        // const usuario = await Usuario.findById(user.id);
 
         res.status(201).json({
             ok: true,
-            data: usuario
+            // data: usuario
+            data: {
+                mensaje: 'Foto subida correctamente'
+            }
         });
 
     } catch(err) {

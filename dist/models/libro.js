@@ -64,7 +64,7 @@ LibroSchema.method('toJSON', function () {
     const _b = this.toObject(), { _id, __v, createdAt, updatedAt } = _b, objeto = __rest(_b, ["_id", "__v", "createdAt", "updatedAt"]);
     objeto.id = _id;
     if (createdAt) {
-        objeto.publicado = (0, moment_1.default)(createdAt).add(6, 'hours').format('DD/MM/YYYY');
+        objeto.publicado = (0, moment_1.default)(createdAt).format('DD/MM/YYYY');
     }
     if ((_a = objeto.usuario) === null || _a === void 0 ? void 0 : _a.nombre) { //si se hizo el populate con el atributo de relacion usuario
         objeto.usuario.id = objeto.usuario._id;

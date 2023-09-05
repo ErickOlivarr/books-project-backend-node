@@ -95,6 +95,7 @@ const actualizarLibro = async (req: Request, res: Response) => {
     const { usuario, img, ...body } = req.body;
     const { id } = req.params;
     const { id: idLogueado } = (req as any as tokenUsuario).payload;
+    body.nombre = capitalizar(body.nombre);
 
     const session: ClientSession = await mongoose.startSession();
     session.startTransaction();
@@ -208,6 +209,7 @@ const actualizarLibro = async (req: Request, res: Response) => {
 }; 
 
 const eliminarLibro = async (req: Request, res: Response) => {
+
     const { id } = req.params;
 
     const session: ClientSession = await mongoose.startSession();
@@ -347,7 +349,7 @@ const añadirFavorito = async (req: Request, res: Response) => {
     res.status(201).json({
         ok: true,
         data: {
-            nombre: libro.nombre
+            mensaje: favorito == 1 ? `El libro ${libro.nombre} fue añadido a favoritos` : `El libro ${libro.nombre} fue eliminado de favoritos`
         }
     });
 };

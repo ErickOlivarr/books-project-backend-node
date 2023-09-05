@@ -125,6 +125,7 @@ const actualizarLibro = (req, res) => __awaiter(void 0, void 0, void 0, function
     const _a = req.body, { usuario, img } = _a, body = __rest(_a, ["usuario", "img"]);
     const { id } = req.params;
     const { id: idLogueado } = req.payload;
+    body.nombre = (0, helpers_1.capitalizar)(body.nombre);
     const session = yield mongoose_1.default.startSession();
     session.startTransaction();
     try {
@@ -348,7 +349,7 @@ const añadirFavorito = (req, res) => __awaiter(void 0, void 0, void 0, function
     res.status(201).json({
         ok: true,
         data: {
-            nombre: libro.nombre
+            mensaje: favorito == 1 ? `El libro ${libro.nombre} fue añadido a favoritos` : `El libro ${libro.nombre} fue eliminado de favoritos`
         }
     });
 });
