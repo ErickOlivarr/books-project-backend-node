@@ -49,6 +49,7 @@ router.get('/', [
 router.get('/:id', [
     validarJWT,
     validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER'),
     check('id', 'No es un id de mongo valido').isMongoId(),
     check('id').custom(existeIdUsuario),
     validarCampos
@@ -57,6 +58,7 @@ router.get('/:id', [
 router.put('/:id', [
     validarJWT,
     validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER'),
     check('id', 'No es un id de mongo valido').isMongoId(),
     check('id').custom(existeIdUsuario),
     check('nombre', 'El nombre es requerido').not().isEmpty(),
@@ -91,6 +93,7 @@ router.post('/rol', [
 router.delete('/:id', [
     validarJWT,
     validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER'),
     check('id', 'No es un id de mongo valido').isMongoId(),
     check('id').custom(existeIdUsuario),
     validarCampos
@@ -99,6 +102,7 @@ router.delete('/:id', [
 router.put('/uploads/:id', [
     validarJWT,
     validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER'),
     check('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(existeIdUsuario),
     validarCampos
 ], subirFotoUsuario);
@@ -106,6 +110,7 @@ router.put('/uploads/:id', [
 router.get('/uploads/:id', [
     validarJWT,
     validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER'),
     check('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(existeIdUsuario),
     validarCampos
 ], mostrarFotoUsuario);

@@ -2,7 +2,7 @@ import Router from 'express';
 import { iniciarSesion, renovarToken } from '../controllers';
 import { check } from 'express-validator';
 import { existeEmailAuth } from '../helpers';
-import { validarCampos, validarJWT, validarEliminado } from '../middlewares';
+import { validarCampos, validarJWT, validarEliminado, esRol } from '../middlewares';
 
 const router = Router();
 
@@ -16,7 +16,8 @@ router.post('/login', [
 
 router.get('/renew', [
     validarJWT,
-    validarEliminado
+    validarEliminado,
+    esRol('ROLE_ADMIN', 'ROLE_USER')
 ], renovarToken);
 
 export { router };

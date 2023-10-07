@@ -1,12 +1,12 @@
 import Router from 'express';
-import { validarJWT, validarEliminado, validarCampos, validarIdsAurores } from '../middlewares';
+import { validarJWT, validarEliminado, validarCampos, validarIdsAurores, esRol } from '../middlewares';
 import { check } from 'express-validator';
 import { existeIdLibro } from '../helpers';
 import { actualizarLibro, añadirFavorito, crearLibro, eliminarLibro, obtenerFavoritos, obtenerLibro, obtenerLibros, subirFotoLibro } from '../controllers';
 
 const router = Router();
 
-router.use([ validarJWT, validarEliminado ]);
+router.use([ validarJWT, validarEliminado, esRol('ROLE_ADMIN', 'ROLE_USER'), ]);
 
 router.post('/', [
     check('nombre', 'El nombre es requerido').notEmpty(),

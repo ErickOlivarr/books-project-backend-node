@@ -49,6 +49,7 @@ router.get('/', [
 router.get('/:id', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),
     (0, express_validator_1.check)('id', 'No es un id de mongo valido').isMongoId(),
     (0, express_validator_1.check)('id').custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
@@ -56,6 +57,7 @@ router.get('/:id', [
 router.put('/:id', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),
     (0, express_validator_1.check)('id', 'No es un id de mongo valido').isMongoId(),
     (0, express_validator_1.check)('id').custom(helpers_1.existeIdUsuario),
     (0, express_validator_1.check)('nombre', 'El nombre es requerido').not().isEmpty(),
@@ -88,6 +90,7 @@ router.post('/rol', [
 router.delete('/:id', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),
     (0, express_validator_1.check)('id', 'No es un id de mongo valido').isMongoId(),
     (0, express_validator_1.check)('id').custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
@@ -95,12 +98,14 @@ router.delete('/:id', [
 router.put('/uploads/:id', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),
     (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
 ], controllers_1.subirFotoUsuario);
 router.get('/uploads/:id', [
     middlewares_1.validarJWT,
     middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),
     (0, express_validator_1.check)('id', 'Debe ser un id de mongo valido y debe ser un usuario que exista').isMongoId().custom(helpers_1.existeIdUsuario),
     middlewares_1.validarCampos
 ], controllers_1.mostrarFotoUsuario);

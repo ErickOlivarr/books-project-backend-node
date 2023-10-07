@@ -20,6 +20,7 @@ router.post('/login', [
 ], controllers_1.iniciarSesion);
 router.get('/renew', [
     middlewares_1.validarJWT,
-    middlewares_1.validarEliminado
+    middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER')
 ], controllers_1.renovarToken);
 //# sourceMappingURL=auth.js.map

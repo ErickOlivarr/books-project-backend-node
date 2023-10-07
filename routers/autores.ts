@@ -1,12 +1,12 @@
 import Router from 'express';
-import { validarJWT, validarEliminado, validarCampos } from '../middlewares';
+import { validarJWT, validarEliminado, validarCampos, esRol } from '../middlewares';
 import { actualizarAutor, crearAutor, eliminarAutor, obtenerAutor, obtenerAutores } from '../controllers';
 import { check } from 'express-validator';
 import { existeIdAutor, existeNombreYApellidoAutor } from '../helpers';
 
 const router = Router();
 
-router.use([validarJWT, validarEliminado]);
+router.use([validarJWT, validarEliminado, esRol('ROLE_ADMIN', 'ROLE_USER'),]);
 
 router.post('/', [
     check('nombre', 'El nombre es requerido').notEmpty(),

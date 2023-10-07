@@ -11,7 +11,7 @@ const express_validator_1 = require("express-validator");
 const helpers_1 = require("../helpers");
 const router = (0, express_1.default)();
 exports.router = router;
-router.use([middlewares_1.validarJWT, middlewares_1.validarEliminado]);
+router.use([middlewares_1.validarJWT, middlewares_1.validarEliminado, (0, middlewares_1.esRol)('ROLE_ADMIN', 'ROLE_USER'),]);
 router.post('/', [
     (0, express_validator_1.check)('nombre', 'El nombre es requerido').notEmpty(),
     (0, express_validator_1.check)('apellido', 'El apellido es requerido').notEmpty(),
