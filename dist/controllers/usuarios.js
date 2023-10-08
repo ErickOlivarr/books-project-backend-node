@@ -789,10 +789,25 @@ const mostrarFoto = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     if (usuario.img) {
         const pathImage = path_1.default.join(__dirname, '../uploads', usuario.id, usuario.img);
         if (fs_1.default.existsSync(pathImage)) {
+            //NOTA: Con lo siguiente es para mandar el archivo, cualquier tipo de archivo ya sea pdf, excel, imagen, etc, esto usando el res.sendFile, pero podemos dejarlo solamente asi sin ponerle headers en su respuesta para que asi ese archivo solamente se muestre, esto es por default, pero si queremos que el archivo en lugar de solo mostrarse en el navegador que se descargue entonces le debemos añadir a la respuesta el header que está abajo, y podemos aplicarle al res el metodo header como se ve abajo para añadirle ese header que es un objeto literal
+            // const headers = {
+            //     'Content-Disposition': "attachment; filename=\"" + usuario.img + "\""
+            // };
+            // return res.header(headers).sendFile(pathImage);
+            //NOTA: Esta es otra forma de añadirle headers a la respuesta, aplicando el metodo appendHeader al res, y asi si le mandamos como valor un arreglo como se hace abajo entonces es como si ese appendHeader con ese key (su primer parametro) se aplicara varias veces poniendole en cada vez cada valor de ese arreglo, y asi como pusimos los headers abajo es para que ese archivo solo se muestre en el navegador pero sin descargarse, lo cual sería por default, osea que aunque no le pongamos estos headers y solo apliquemos el metodo sendFile al res de todos modos igual se va a mostrar ese archivo sin descargarse, y ya si queremos que se descargue en lugar de mostrarse en el navegador pues le aplicamos el header que está arriba
+            //NOTA: Estos headers aplican para cualquier lenguaje o framework, igual se aplica para spring boot por ejemplo, es lo mismo para descargar o visualizar un archivo en el navegador, se aplican los mismos headers
+            res.appendHeader('Content-Disposition', "inline; filename=\"" + usuario.img + "\"");
+            res.appendHeader('Content-Type', ['image/jpg', 'image/png']);
             return res.sendFile(pathImage);
         }
     }
     const pathImage = path_1.default.join(__dirname, '../assets/no-image.jpg'); //OJO que aqui no se va a leer la carpeta assets del proyecto aqui con typescript, sino que se leerá la carpeta assets que esté dentro de la carpeta dist del proyecto ya que ahí es donde se ejecuta el codigo, aqui nosotros solo estamos usando typescript pero ya al ejecutarlo se ejecuta su parte equivalente a javascript que está dentro de la carpeta dist, asi que ahí debemos crear esa carpeta se assets junto con su archivo de no-image.jpg, ya que si no da error
+    // const headers = {
+    //     'content-Disposition': "attachment; filename=\"" + 'no-image.jpg' + "\""
+    // };
+    // res.header(headers).sendFile(pathImage);
+    res.appendHeader('Content-Disposition', "inline; filename=\"" + 'no-image.jpg' + "\"");
+    res.appendHeader('Content-Type', ['image/jpg', 'image/png']);
     res.sendFile(pathImage);
 });
 exports.mostrarFoto = mostrarFoto;

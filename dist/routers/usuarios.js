@@ -35,7 +35,8 @@ router.post('/email/crear', [
 ], controllers_1.crearUsuarioYEnviarEmail);
 router.post('/', [
     middlewares_1.validarJWT,
-    middlewares_1.validarEliminado
+    middlewares_1.validarEliminado,
+    (0, middlewares_1.esRol)('ROLE_NUEVO')
 ], controllers_1.validarUsuarioCreado);
 router.post('/email/reenviar', [
     (0, express_validator_1.check)('baseUrl', 'La baseUrl se debe proporcionar y debe ser un string').isString(),

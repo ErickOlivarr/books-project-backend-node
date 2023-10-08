@@ -32,7 +32,8 @@ router.post('/email/crear', [ //este endpoint antes era para crear un usuario an
 
 router.post('/', [
     validarJWT,
-    validarEliminado
+    validarEliminado,
+    esRol('ROLE_NUEVO')
 ], validarUsuarioCreado);
 
 router.post('/email/reenviar', [
